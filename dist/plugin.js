@@ -22,8 +22,7 @@ exports.config = {
 }
 
 exports.changelog = [
-    { "version": 1.1, "message": "Hide from Unauthorized, Modern Plugin Pattern" },
-    { "version": 1.0, "message": "Initial GitHub Release" }
+    { "version": 1.1, "message": "Hide from Unauthorized, Modern Plugin Pattern" }
 ]
 
 const si = require('systeminformation');
