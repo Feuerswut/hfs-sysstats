@@ -1,5 +1,5 @@
 // Plugin metadata for HFS v3
-exports.version = '1.0';
+exports.version = '1.1';
 exports.description = 'System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stats';
 exports.apiRequired = '8.65'; // ctx API version
 
@@ -13,9 +13,16 @@ exports.config = {
         helperText: "Allow Users to access the Stats panel without login.",
         xs: 6,
     },
+    hideFromUnauthorized: {
+        type: 'boolean',
+        defaultValue: false,
+        helperText: "Make the plugin invisible to non-logged users (returns nothing instead of 403).",
+        xs: 6,
+    },
 }
 
 exports.changelog = [
+    { "version": 1.1, "message": "Hide from Unauthorized, Modern Plugin Pattern" },
     { "version": 1.0, "message": "Initial GitHub Release" }
 ]
 
@@ -31,9 +38,11 @@ function serveFile(ctx, filePath) {
         
         // Check if file exists
         if (!fs.existsSync(fullPath)) {
-            ctx.res.writeHead(404, { 'Content-Type': 'text/plain' });
-            ctx.res.end(`File not found: ${path.basename(fullPath)}`);
-            return true;
+            ctx.status = 404;
+            ctx.type = 'text/plain';
+            ctx.body = `File not found: ${path.basename(fullPath)}`;
+            ctx.stop();
+            return;
         }
         
         // Determine content type based on file extension
@@ -65,33 +74,29 @@ function serveFile(ctx, filePath) {
                 break;
         }
         
-        // Serve the file with appropriate content type
-        ctx.res.writeHead(200, { 
-            'Content-Type': contentType,
-            'Cache-Control': 'no-cache'
-        });
+        ctx.type = contentType;
+        ctx.set('Cache-Control', 'no-cache');
         
-        // For binary files like images, use a stream instead of readFileSync
+        // For binary files like images, use a stream
         if (contentType.startsWith('image/')) {
-            const stream = fs.createReadStream(fullPath);
-            stream.pipe(ctx.res);
+            ctx.body = fs.createReadStream(fullPath);
         } else {
             // For text files, read and send directly
-            const content = fs.readFileSync(fullPath, 'utf8');
-            ctx.res.end(content);
+            ctx.body = fs.readFileSync(fullPath, 'utf8');
         }
         
-        return true;
+        ctx.stop();
     } catch (err) {
-        ctx.res.writeHead(500, { 'Content-Type': 'text/plain' });
-        ctx.res.end('Error serving file: ' + err.message);
-        return true;
+        ctx.status = 500;
+        ctx.type = 'text/plain';
+        ctx.body = 'Error serving file: ' + err.message;
+        ctx.stop();
     }
 }
 
 exports.init = async api => {
     const auth = api.require('./auth');
-    getCurrentUsername = auth.getCurrentUsername;
+    const getCurrentUsername = auth.getCurrentUsername;
 
     // Return middleware with access to api
     return { middleware }
@@ -103,7 +108,7 @@ exports.init = async api => {
 
         // Only intercept /~/stats requests
         if (!url.startsWith('/~/stats')) {
-            return false; // Let HFS continue processing
+            return; // Let HFS continue processing
         }
 
         // check if the user is authenticated
@@ -112,7 +117,14 @@ exports.init = async api => {
             // If anonymous access is not allowed, block access
             const allowPublicAccess = api.getConfig('allowPublicAccess');            
             if (allowPublicAccess === false) {
-                return false; // return to HFS to handle login
+                const hideFromUnauthorized = api.getConfig('hideFromUnauthorized');
+                if (hideFromUnauthorized) {
+                    return; // Pretend the plugin doesn't exist
+                }
+                ctx.status = 403;
+                ctx.body = '';
+                ctx.stop();
+                return;
             }
         }
         
@@ -173,21 +185,22 @@ exports.init = async api => {
                     }
                 };
                 
-                ctx.res.writeHead(200, { 
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache, no-store, must-revalidate'
-                });
-                ctx.res.end(JSON.stringify(data, null, 2));
+                ctx.type = 'application/json';
+                ctx.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+                ctx.body = JSON.stringify(data, null, 2);
             } catch (err) {
-                ctx.res.writeHead(500, { 'Content-Type': 'application/json' });
-                ctx.res.end(JSON.stringify({ error: 'Failed to retrieve system information', details: err.message }));
+                ctx.status = 500;
+                ctx.type = 'application/json';
+                ctx.body = JSON.stringify({ error: 'Failed to retrieve system information', details: err.message });
             }
-            return true;
+            ctx.stop();
+            return;
         }
         
         // For the main /~/stats path, serve index.html
         if (url === '/~/stats' || url === '/~/stats/') {
-            return serveFile(ctx);
+            serveFile(ctx);
+            return;
         }
 
         // For files requested through index.html (css, js, images, etc.)
@@ -195,10 +208,9 @@ exports.init = async api => {
             const requestedFile = url.substring('/~/stats/'.length);
             if (requestedFile) {
                 const filePath = path.join(__dirname, 'public', requestedFile);
-                return serveFile(ctx, filePath);
+                serveFile(ctx, filePath);
+                return;
             }
         }
-        
-        return true;
     };
 }
