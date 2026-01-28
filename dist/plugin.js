@@ -1,9 +1,9 @@
 // Plugin metadata for HFS v3
-exports.version = '1.2';
-exports.description = 'System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stats';
-exports.apiRequired = '8.65'; // ctx API version
+exports.version = 1.4;
+exports.description = "System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stat";
+exports.apiRequired = 8.65;
 
-exports.author = 'Feuerswut';
+exports.author = "Feuerswut";
 exports.repo = "Feuerswut/hfs-sysstats"
 
 exports.config = {
