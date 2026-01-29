@@ -8,3 +8,6 @@ To access, visit
 Change the public dashboard visibility under plugin options.
 
 **Please make sure the npm package sysstats is installed, otherwise the plugin will not start.**
+
+# LICENSE
+[Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) and [Chart.js](https://github.com/chartjs/Chart.js) are licensed under the MIT License.
