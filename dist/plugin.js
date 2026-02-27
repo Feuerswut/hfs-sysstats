@@ -1,5 +1,5 @@
 // Plugin metadata for HFS v3
-exports.version = 1.5.1;
+exports.version = 1.6;
 exports.description = "System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stat";
 exports.apiRequired = 8.65;
 
