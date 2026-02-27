@@ -1,5 +1,5 @@
 // Plugin metadata for HFS v3
-exports.version = 1.5;
+exports.version = 1.5.1;
 exports.description = "System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stat";
 exports.apiRequired = 8.65;
 
@@ -26,7 +26,7 @@ exports.changelog = [
     { "version": 1.1, "message": "Hide from Unauthorized, Modern Plugin Pattern" }
 ]
 
-const si = require('systeminformation');
+const si = require('./systeminformation');
 const path = require('path');
 const fs = require('fs');
 
