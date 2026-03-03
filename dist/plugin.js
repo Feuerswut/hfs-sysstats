@@ -1,10 +1,11 @@
 // Plugin metadata for HFS v3
-exports.version = 1.6;
+exports.version = 1.7;
 exports.description = "System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stat";
 exports.apiRequired = 8.65;
 
 exports.author = "Feuerswut";
-exports.repo = "Feuerswut/hfs-sysstats"
+exports.repo   = "Feuerswut/hfs-sysstats"
+exports.depend = [{ "repo": "Feuerswut/hfs-tailwind"}]
 
 exports.config = {
     allowPublicAccess: {
@@ -22,6 +23,7 @@ exports.config = {
 }
 
 exports.changelog = [
+    { "version": 1.7, "message": "Seperate Modern Tailwind distribution into another plugin. Please install before you update." },
     { "version": 1.5, "message": "Added systeminformation to dist so you don't have to" },
     { "version": 1.1, "message": "Hide from Unauthorized, Modern Plugin Pattern" }
 ]
@@ -202,7 +204,16 @@ exports.init = async api => {
             serveFile(ctx);
             return;
         }
-
+	
+	// For tailwind, serve /~/stats/tailwind.js
+	if (url === '/~/stats/tailwind.js') {
+            ctx.type = 'application/javascript';
+            ctx.set('Cache-Control', 'public, max-age=86400');
+            ctx.body = fs.createReadStream(api.customApiCall('tailwind')[0].path);
+            ctx.stop();
+            return;
+        }
+	
         // For files requested through index.html (css, js, images, etc.)
         if (url.startsWith('/~/stats/')) {
             const requestedFile = url.substring('/~/stats/'.length);
