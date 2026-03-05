@@ -1,0 +1,37 @@
+
+name: Test
+
+on: [
+  pull_request,
+  push
+]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [16.x, 17.x, 18.x, 19.x, 20.x]
+        include:
+          - os: macos-latest
+            node-version: 16.x
+          - os: macos-latest
+            node-version: 18.x
+          - os: macos-latest
+            node-version: 20.x
+          - os: windows-latest
+            node-version: 16.x
+          - os: windows-latest
+            node-version: 18.x
+          - os: windows-latest
+            node-version: 20.x
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: node test/ci.js
