@@ -3,9 +3,9 @@ exports.version = 1.7;
 exports.description = "System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stat";
 exports.apiRequired = 8.65;
 
-exports.author = "Feuerswut";
-exports.repo   = "Feuerswut/hfs-sysstats"
-exports.depend = [{ "repo": "Feuerswut/hfs-tailwind"}]
+exports.author = "feuerswut";
+exports.repo   = "feuerswut/hfs-sysstats"
+exports.depend = [{ "repo": "feuerswut/hfs-tailwind"}]
 
 exports.config = {
     allowPublicAccess: {
