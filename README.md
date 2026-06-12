@@ -12,7 +12,12 @@ To access, visit
 
 Change the public dashboard visibility under plugin options.
 
-**Please make sure the npm package sysstats is installed, otherwise the plugin will not start.**
+## Usage Ping
+This plugin contains a daily usage ping, so I know what kind of architectures are used and how I can improve the dashboard. By default, only limited data is sent ("basic" usage ping), you can opt-out completely by setting the usage ping to "off", or give me more information by setting it to "detailed".
 
 # LICENSE
 [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) and [Chart.js](https://github.com/chartjs/Chart.js) are licensed under the MIT License.
+
+[systeminformation](https://github.com/sebhildebrandt/systeminformation) is verbatim-copied and also licensed under MIT.
+
+This plugin is licensed under the GNU Affero Public License (AGPLv3).
