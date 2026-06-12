@@ -1,7 +1,312 @@
-.stat-card { transition: all 0.3s ease; }
-.stat-card:hover { transform: translateY(-2px); }
+/* ─────────────────────────────────────────────────────────────────────────────
+   CSS variables — light & dark
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+    --bg:        #f3f4f6;
+    --card:      #ffffff;
+    --card-hover:#f9fafb;
+    --t1:        #111827;
+    --t2:        #374151;
+    --t3:        #6b7280;
+    --t4:        #9ca3af;
+    --border:    #e5e7eb;
+    --bar-bg:    #e5e7eb;
+    --shadow:    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+    --radius:    0.5rem;
+    --mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace;
+}
+
+/* ─── Dark mode variable overrides ─────────────────────────────────────────── */
+body.theme-dark {
+    --bg:        #0d1117;
+    --card:      #161b22;
+    --card-hover:#1c2128;
+    --t1:        #e6edf3;
+    --t2:        #c9d1d9;
+    --t3:        #8b949e;
+    --t4:        #6e7681;
+    --border:    #30363d;
+    --bar-bg:    #21262d;
+    --shadow:    0 1px 3px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
+html, body {
+    background-color: var(--bg) !important;
+    color: var(--t1);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ─── Tailwind overrides scoped to theme-dark on <html> ─────────────────────
+   We key off body.theme-dark so that every element inside the page responds,
+   including cards, text, borders, and buttons.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+body.theme-dark body { background-color: var(--bg) !important; color: var(--t1); }
+
+body.theme-dark .bg-white        { background-color: var(--card)    !important; }
+body.theme-dark .bg-gray-100     { background-color: var(--bar-bg)  !important; }
+body.theme-dark .bg-gray-50      { background-color: var(--bar-bg)  !important; }
+body.theme-dark .bg-gray-200     { background-color: var(--bar-bg)  !important; }
+
+body.theme-dark .text-gray-900   { color: var(--t1) !important; }
+body.theme-dark .text-gray-800   { color: var(--t2) !important; }
+body.theme-dark .text-gray-700   { color: var(--t2) !important; }
+body.theme-dark .text-gray-600   { color: var(--t3) !important; }
+body.theme-dark .text-gray-500   { color: var(--t3) !important; }
+body.theme-dark .text-gray-400   { color: var(--t4) !important; }
+
+body.theme-dark .border-gray-200 { border-color: var(--border) !important; }
+body.theme-dark .border-gray-100 { border-color: var(--border) !important; }
+body.theme-dark .border-gray-300 { border-color: var(--border) !important; }
+
+body.theme-dark .stat-card       { background-color: var(--card) !important; border-color: var(--border) !important; }
+
+body.theme-dark button#themeToggle {
+    background-color: var(--card)   !important;
+    border-color:     var(--border) !important;
+    color:            var(--t1)     !important;
+}
+body.theme-dark button#themeToggle:hover {
+    background-color: var(--card-hover) !important;
+}
+
+/* Status indicator pill */
+body.theme-dark .flex.items-center.h-8.bg-white {
+    background-color: var(--card)   !important;
+    border-color:     var(--border) !important;
+}
+
+/* Mobile chart placeholders */
+body.theme-dark .border-dashed {
+    border-color: var(--border) !important;
+}
+
+/* ─── Chart container ───────────────────────────────────────────────────────── */
+.chart-container {
+    position:   relative !important;
+    max-height: 220px    !important;
+    width:      100%     !important;
+}
+
+/* ─── Stat cards ────────────────────────────────────────────────────────────── */
+.stat-card {
+    background:      var(--card);
+    border:          1px solid var(--border);
+    box-shadow:      var(--shadow);
+    border-radius:   var(--radius);
+    transition:      transform 0.2s ease, box-shadow 0.2s ease;
+    justify-content: flex-start;
+}
+.stat-card:hover {
+    transform:  translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ─── Heartbeat dot ─────────────────────────────────────────────────────────── */
 .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: .5; }
+    0%, 100% { opacity: 1;   }
+    50%       { opacity: 0.4; }
+}
+
+/* ─── Progress bars ─────────────────────────────────────────────────────────── */
+.progress-track {
+    background:    var(--bar-bg);
+    border-radius: 9999px;
+    height:        6px;
+    overflow:      hidden;
+}
+.progress-fill {
+    height:        100%;
+    border-radius: 9999px;
+    transition:    width 0.5s ease;
+}
+
+/* ─── Process table ─────────────────────────────────────────────────────────── */
+.proc-table {
+    width:           100%;
+    border-collapse: collapse;
+    font-size:       0.78rem;
+    font-family:     var(--mono);
+    color:           var(--t2);
+}
+.proc-table th {
+    text-align:     left;
+    padding:        6px 8px;
+    color:          var(--t3);
+    border-bottom:  1px solid var(--border);
+    font-family:    sans-serif;
+    font-size:      0.7rem;
+    text-transform: uppercase;
+    white-space:    nowrap;
+}
+.proc-table td {
+    padding:       5px 8px;
+    border-bottom: 1px solid var(--bar-bg);
+    overflow:      hidden;
+    text-overflow: ellipsis;
+    white-space:   nowrap;
+}
+.proc-table tr:hover td { background: var(--card-hover); }
+
+/* ─── Process table column widths ───────────────────────────────────────────── */
+.proc-table .pid-col      { width: 60px;  min-width: 60px;  max-width: 60px;  }
+.proc-table .user-col     { width: 80px;  min-width: 60px;  max-width: 80px;  }
+.proc-table .cmd-col      { width: 140px; min-width: 80px;  max-width: 140px; }
+.proc-table .cpu-val-col  { width: 56px;  min-width: 56px;  max-width: 56px;  white-space: nowrap; }
+.proc-table .mem-val-col  { width: 56px;  min-width: 56px;  max-width: 56px;  white-space: nowrap; }
+/* Bar columns expand to fill remaining space on desktop */
+.proc-table .bar-col      { width: auto;  min-width: 60px;  }
+
+/* ─── Process inline bar tracks ─────────────────────────────────────────────── */
+.proc-bar-track {
+    background:    var(--bar-bg);
+    border-radius: 9999px;
+    height:        5px;
+    overflow:      hidden;
+    min-width:     40px;
+}
+.proc-bar-fill {
+    height:        100%;
+    border-radius: 9999px;
+    transition:    width 0.4s ease;
+}
+
+/* ─── Hide bar columns on mobile ─────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+/* ─── Core grid ─────────────────────────────────────────────────────────────── */
+.cores-grid {
+    display:               grid;
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+    gap:                   4px;
+    margin-top:            6px;
+}
+.core-item {
+    font-size:   0.62rem;
+    text-align:  center;
+    color:       var(--t3);
+    font-family: var(--mono);
+}
+.core-bar {
+    height:        3px;
+    border-radius: 9999px;
+    background:    var(--bar-bg);
+    overflow:      hidden;
+}
+.core-bar-fill {
+    height:     100%;
+    background: #3b82f6;
+}
+
+/* ─── Network interface rows ─────────────────────────────────────────────────── */
+.iface-row {
+    padding:       8px 0;
+    border-bottom: 1px solid var(--border);
+    color:         var(--t2);
+}
+.iface-row:last-child { border-bottom: none; }
+
+.iface-name {
+    font-family:  var(--mono);
+    font-size:    0.75rem;
+    font-weight:  600;
+    color:        var(--t1);
+}
+
+.iface-badge {
+    display:       inline-block;
+    font-size:     0.6rem;
+    padding:       1px 5px;
+    border-radius: 9999px;
+    font-weight:   bold;
+}
+.iface-badge.up   { background: #d1fae5; color: #065f46; }
+.iface-badge.down { background: #fee2e2; color: #991b1b; }
+
+body.theme-dark .iface-badge.up   { background: #064e3b; color: #6ee7b7; }
+body.theme-dark .iface-badge.down { background: #450a0a; color: #fca5a5; }
+
+/* Detail rows beneath the interface header */
+.iface-details {
+    display:        flex;
+    flex-direction: column;
+    gap:            2px;
+    margin-top:     4px;
+    font-family:    var(--mono);
+    font-size:      0.68rem;
+    color:          var(--t3);
+}
+.iface-details > div {
+    display:     flex;
+    align-items: baseline;
+    gap:         6px;
+}
+.iface-label {
+    flex-shrink:   0;
+    width:         36px;
+    font-size:     0.62rem;
+    text-transform: uppercase;
+    color:         var(--t4);
+    font-family:   sans-serif;
+    letter-spacing: 0.04em;
+}
+.iface-value {
+    color:     var(--t2);
+    word-break: break-all;
+}
+/* IPv6 addresses are long — allow them to wrap gracefully */
+.iface-value--ip6 {
+    word-break: break-all;
+    line-height: 1.3;
+}
+
+/* ─── System hardware text — up to 2 lines before ellipsis ──────────────────── */
+.system-hardware-text {
+    display:            -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow:           hidden;
+    text-overflow:      ellipsis;
+    white-space:        normal;
+    line-height:        1.4;
+    max-height:         2.8em;
+}
+
+/* ─── Monospace numeric values ───────────────────────────────────────────────── */
+.val {
+    font-family:        var(--mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ─── Error alert dark mode ──────────────────────────────────────────────────── */
+body.theme-dark .bg-red-100  { background-color: #450a0a !important; }
+body.theme-dark .border-red-400 { border-color: #b91c1c !important; }
+body.theme-dark .text-red-700   { color: #fca5a5 !important; }
+
+/* ─── Fix the storage card ───────────────────────────────────────────────────── */
+@media (min-width: 1025px) and (max-width: 1280px) {
+    #diskContainer .disk-row-header {
+        flex-direction: column;
+        align-items:    stretch;
+        gap:            2px;
+    }
+    #diskContainer .disk-mount {
+        text-align:    left;
+        max-width:     100%;
+        width:         100%;
+        white-space:   nowrap;
+        overflow:      hidden;
+        text-overflow: ellipsis;
+    }
+    #diskContainer .disk-size {
+        text-align: right;
+    }
 }

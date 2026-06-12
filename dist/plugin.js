@@ -1,227 +1,84 @@
 // Plugin metadata for HFS v3
-exports.version = 1.7;
-exports.description = "System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stat";
+exports.version     = 2.0;
+exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
 exports.author = "feuerswut";
-exports.repo   = "feuerswut/hfs-sysstats"
-exports.depend = [{ "repo": "feuerswut/hfs-tailwind"}]
+exports.repo   = "feuerswut/hfs-sysstats";
+exports.depend = [{ repo: "feuerswut/hfs-tailwind" }];
 
 exports.config = {
     allowPublicAccess: {
-        type: 'boolean',
+        type:       'boolean',
         defaultValue: false,
-        helperText: "Allow Users to access the Stats panel without login.",
+        helperText: "Allow users to access the Stats panel without login.",
         xs: 6,
     },
     hideFromUnauthorized: {
-        type: 'boolean',
+        type:       'boolean',
         defaultValue: false,
         helperText: "Make the plugin invisible to non-logged users (returns nothing instead of 403).",
         xs: 6,
     },
-}
+    usagePing: {
+        type:         'select',
+        defaultValue: 'basic',
+        label:        'Usage Ping',
+        options:      ['off', 'basic', 'detailed'],
+        helperText:   "'basic' sends platform & arch. 'detailed' adds CPU cores, RAM, disk count, OS distro. 'off' sends nothing.",
+        xs: 12,
+    },
+};
 
 exports.changelog = [
-    { "version": 1.7, "message": "Seperate Modern Tailwind distribution into another plugin. Please install before you update." },
-    { "version": 1.5, "message": "Added systeminformation to dist so you don't have to" },
-    { "version": 1.1, "message": "Hide from Unauthorized, Modern Plugin Pattern" }
-]
+    { version: 2.0, message: "Full systeminformation integration. Separate serve.js/api.js/config-manager.js. storage/config.json with hardware detection. Dark mode support." },
+    { version: 1.8, message: "Added optional daily usage ping (basic / detailed / off)." },
+    { version: 1.7, message: "Separate Modern Tailwind distribution into another plugin. Please install before updating." },
+];
 
 const si = require('./systeminformation');
-const path = require('path');
-const fs = require('fs');
-
-// General function to serve files from disk (HTML, CSS, JS, etc.)
-function serveFile(ctx, filePath) {
-    try {
-        // Use provided path or default to index.html
-        const fullPath = filePath || path.join(__dirname, 'public', 'index.html');
-        
-        // Check if file exists
-        if (!fs.existsSync(fullPath)) {
-            ctx.status = 404;
-            ctx.type = 'text/plain';
-            ctx.body = `File not found: ${path.basename(fullPath)}`;
-            ctx.stop();
-            return;
-        }
-        
-        // Determine content type based on file extension
-        const extname = path.extname(fullPath);
-        let contentType = 'text/plain';
-        
-        switch (extname) {
-            case '.html':
-                contentType = 'text/html; charset=utf-8';
-                break;
-            case '.css':
-                contentType = 'text/css';
-                break;
-            case '.js':
-                contentType = 'application/javascript';
-                break;
-            case '.json':
-                contentType = 'application/json';
-                break;
-            case '.png':
-                contentType = 'image/png';
-                break;
-            case '.jpg':
-            case '.jpeg':
-                contentType = 'image/jpeg';
-                break;
-            case '.svg':
-                contentType = 'image/svg+xml';
-                break;
-        }
-        
-        ctx.type = contentType;
-        ctx.set('Cache-Control', 'no-cache');
-        
-        // For binary files like images, use a stream
-        if (contentType.startsWith('image/')) {
-            ctx.body = fs.createReadStream(fullPath);
-        } else {
-            // For text files, read and send directly
-            ctx.body = fs.readFileSync(fullPath, 'utf8');
-        }
-        
-        ctx.stop();
-    } catch (err) {
-        ctx.status = 500;
-        ctx.type = 'text/plain';
-        ctx.body = 'Error serving file: ' + err.message;
-        ctx.stop();
-    }
-}
+const { schedulePing }        = require('./usage-ping');
+const { initConfig }          = require('./config-manager');
+const { handleStaticRequest } = require('./serve');
+const { handleApiRequest }    = require('./api');
 
 exports.init = async api => {
-    const auth = api.require('./auth');
+    const auth               = api.require('./auth');
     const getCurrentUsername = auth.getCurrentUsername;
 
-    // Return middleware with access to api
-    return { middleware }
+    // Start optional daily telemetry ping
+    schedulePing(api, si, exports.version);
 
-    // Define middleware inside the init scope so it has access to api
+    // Bootstrap config — generates storage/config.json from defaults + hardware detection
+    // if it doesn't exist yet. Subsequent boots just cache-read the existing file.
+    await initConfig(si);
+
+    return { middleware };
+
     async function middleware(ctx) {
-
         const url = ctx.req.url;
 
-        // Only intercept /~/stats requests
-        if (!url.startsWith('/~/stats')) {
-            return; // Let HFS continue processing
-        }
+        // Only handle our namespace
+        if (!url.startsWith('/~/stats')) return;
 
-        // check if the user is authenticated
+        // ── Auth gate ────────────────────────────────────────────────────────
         const username = getCurrentUsername(ctx);
         if (!username) {
-            // If anonymous access is not allowed, block access
-            const allowPublicAccess = api.getConfig('allowPublicAccess');            
-            if (allowPublicAccess === false) {
-                const hideFromUnauthorized = api.getConfig('hideFromUnauthorized');
-                if (hideFromUnauthorized) {
-                    return; // Pretend the plugin doesn't exist
-                }
+            if (!api.getConfig('allowPublicAccess')) {
+                if (api.getConfig('hideFromUnauthorized')) return; // pretend we don't exist
                 ctx.status = 403;
-                ctx.body = '';
+                ctx.body   = '';
                 ctx.stop();
                 return;
             }
         }
-        
-        // API endpoint at /~/stats/api
-        if (url === '/~/stats/api') {
-            try {
-                const [cpu, mem, disk, temp, network, osInfo, uptime] = await Promise.all([
-                    si.currentLoad(),
-                    si.mem(),
-                    si.fsSize(),
-                    si.cpuTemperature(),
-                    si.networkStats(),
-                    si.osInfo(),
-                    si.time()
-                ]);
-                
-                const data = {
-                    timestamp: Date.now(),
-                    cpu: {
-                        load: cpu.currentLoad || 0,
-                        loadUser: cpu.currentLoadUser || 0,
-                        loadSystem: cpu.currentLoadSystem || 0,
-                        cores: cpu.cpus?.length || 0
-                    },
-                    memory: {
-                        total: mem.total || 0,
-                        used: mem.used || 0,
-                        free: mem.free || 0,
-                        available: mem.available || 0,
-                        usage: mem.total ? ((mem.used / mem.total) * 100) : 0
-                    },
-                    disk: disk && disk.length > 0 ? {
-                        total: disk[0].size || 0,
-                        used: disk[0].used || 0,
-                        available: disk[0].available || 0,
-                        usage: disk[0].size ? ((disk[0].used / disk[0].size) * 100) : 0,
-                        filesystem: disk[0].fs || 'Unknown'
-                    } : null,
-                    temperature: {
-                        main: temp.main || null,
-                        cores: temp.cores || [],
-                        max: temp.max || null
-                    },
-                    network: network && network.length > 0 ? {
-                        interface: network[0].iface || 'Unknown',
-                        rx_bytes: network[0].rx_bytes || 0,
-                        tx_bytes: network[0].tx_bytes || 0,
-                        rx_sec: network[0].rx_sec || 0,
-                        tx_sec: network[0].tx_sec || 0
-                    } : null,
-                    system: {
-                        platform: osInfo.platform || 'Unknown',
-                        distro: osInfo.distro || 'Unknown',
-                        release: osInfo.release || 'Unknown',
-                        arch: osInfo.arch || 'Unknown',
-                        hostname: osInfo.hostname || 'Unknown',
-                        uptime: uptime.uptime || 0
-                    }
-                };
-                
-                ctx.type = 'application/json';
-                ctx.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-                ctx.body = JSON.stringify(data, null, 2);
-            } catch (err) {
-                ctx.status = 500;
-                ctx.type = 'application/json';
-                ctx.body = JSON.stringify({ error: 'Failed to retrieve system information', details: err.message });
-            }
-            ctx.stop();
+
+        // ── Route dispatch ───────────────────────────────────────────────────
+        if (url === '/~/stats/api' || url.startsWith('/~/stats/api?')) {
+            await handleApiRequest(ctx, si);
             return;
         }
-        
-        // For the main /~/stats path, serve index.html
-        if (url === '/~/stats' || url === '/~/stats/') {
-            serveFile(ctx);
-            return;
-        }
-	
-	// For tailwind, serve /~/stats/tailwind.js
-	if (url === '/~/stats/tailwind.js') {
-            ctx.type = 'application/javascript';
-            ctx.set('Cache-Control', 'public, max-age=86400');
-            ctx.body = fs.createReadStream(api.customApiCall('tailwind')[0].path);
-            ctx.stop();
-            return;
-        }
-	
-        // For files requested through index.html (css, js, images, etc.)
-        if (url.startsWith('/~/stats/')) {
-            const requestedFile = url.substring('/~/stats/'.length);
-            if (requestedFile) {
-                const filePath = path.join(__dirname, 'public', requestedFile);
-                serveFile(ctx, filePath);
-                return;
-            }
-        }
-    };
-}
+
+        handleStaticRequest(ctx, api);
+    }
+};
