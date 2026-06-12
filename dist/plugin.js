@@ -1,5 +1,5 @@
 // Plugin metadata for HFS v3
-exports.version = 1.7;
+exports.version = 1.8;
 exports.description = "System Statistics Dashboard - Real-time monitoring of CPU, memory, disk, temperature and network stat";
 exports.apiRequired = 8.65;
 
@@ -20,17 +20,30 @@ exports.config = {
         helperText: "Make the plugin invisible to non-logged users (returns nothing instead of 403).",
         xs: 6,
     },
+    usagePing: {
+        type: 'select',
+        defaultValue: 'basic',
+        label: 'Usage Ping',
+        options: ['off', 'basic', 'detailed'],
+        helperText: "Daily ping so the author knows what architectures are in use. "
+            + "'basic' sends platform & arch only. "
+            + "'detailed' adds CPU cores, RAM size bucket, disk count and OS distro. "
+            + "'off' sends nothing at all.",
+        xs: 12,
+    },
 }
 
 exports.changelog = [
+    { "version": 1.8, "message": "Added optional daily usage ping (basic / detailed / off)." },
     { "version": 1.7, "message": "Seperate Modern Tailwind distribution into another plugin. Please install before you update." },
     { "version": 1.5, "message": "Added systeminformation to dist so you don't have to" },
     { "version": 1.1, "message": "Hide from Unauthorized, Modern Plugin Pattern" }
 ]
 
-const si = require('./systeminformation');
+const si   = require('./systeminformation');
 const path = require('path');
-const fs = require('fs');
+const fs   = require('fs');
+const { schedulePing } = require('./usage-ping');
 
 // General function to serve files from disk (HTML, CSS, JS, etc.)
 function serveFile(ctx, filePath) {
@@ -99,6 +112,9 @@ function serveFile(ctx, filePath) {
 exports.init = async api => {
     const auth = api.require('./auth');
     const getCurrentUsername = auth.getCurrentUsername;
+
+    // Start the daily usage ping (fires 1 h after init, then every 24 h)
+    schedulePing(api, si, exports.version);
 
     // Return middleware with access to api
     return { middleware }
@@ -205,8 +221,8 @@ exports.init = async api => {
             return;
         }
 	
-	// For tailwind, serve /~/stats/tailwind.js
-	if (url === '/~/stats/tailwind.js') {
+        // For tailwind, serve /~/stats/tailwind.js
+        if (url === '/~/stats/tailwind.js') {
             ctx.type = 'application/javascript';
             ctx.set('Cache-Control', 'public, max-age=86400');
             ctx.body = fs.createReadStream(api.customApiCall('tailwind')[0].path);
