@@ -1,7 +1,333 @@
-.stat-card { transition: all 0.3s ease; }
-.stat-card:hover { transform: translateY(-2px); }
+/* ─────────────────────────────────────────────────────────────────────────────
+   CSS variables — light & dark
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+    --bg:          #f3f4f6;
+    --card:        #ffffff;
+    --card-hover:  #f9fafb;
+    --t1:          #111827;
+    --t2:          #374151;
+    --t3:          #6b7280;
+    --t4:          #9ca3af;
+    --border:      #e5e7eb;
+    --bar-bg:      #e5e7eb;
+    --shadow:      0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg:   0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+    --radius:      0.5rem;
+    --mono:        'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace;
+}
+
+body.theme-dark {
+    --bg:          #0d1117;
+    --card:        #161b22;
+    --card-hover:  #1c2128;
+    --t1:          #e6edf3;
+    --t2:          #c9d1d9;
+    --t3:          #8b949e;
+    --t4:          #6e7681;
+    --border:      #30363d;
+    --bar-bg:      #21262d;
+    --shadow:      0 1px 3px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg:   0 4px 6px -1px rgb(0 0 0 / 0.4);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tailwind colour-class overrides for dark mode
+   ───────────────────────────────────────────────────────────────────────────── */
+body.theme-dark { background-color: var(--bg) !important; }
+
+body.theme-dark .bg-white        { background-color: var(--card)   !important; }
+body.theme-dark .bg-gray-50      { background-color: var(--card)   !important; }
+body.theme-dark .bg-gray-100     { background-color: var(--bg)     !important; }
+body.theme-dark .bg-gray-200     { background-color: var(--bar-bg) !important; }
+body.theme-dark .bg-gray-800     { background-color: var(--card)   !important; }
+
+body.theme-dark .text-gray-900   { color: var(--t1) !important; }
+body.theme-dark .text-gray-800   { color: var(--t1) !important; }
+body.theme-dark .text-gray-700   { color: var(--t2) !important; }
+body.theme-dark .text-gray-600   { color: var(--t3) !important; }
+body.theme-dark .text-gray-500   { color: var(--t3) !important; }
+body.theme-dark .text-gray-400   { color: var(--t4) !important; }
+
+body.theme-dark .border          { border-color: var(--border) !important; }
+body.theme-dark .border-gray-200 { border-color: var(--border) !important; }
+body.theme-dark .divide-gray-200 > * + * { border-color: var(--border) !important; }
+
+body.theme-dark .shadow-md       { box-shadow: var(--shadow)    !important; }
+body.theme-dark .shadow-lg       { box-shadow: var(--shadow-lg) !important; }
+
+/* Error alert */
+body.theme-dark .bg-red-100      { background-color: #2d0a0a    !important; }
+body.theme-dark .border-red-400  { border-color:     #b91c1c    !important; }
+body.theme-dark .text-red-700    { color:            #fca5a5    !important; }
+body.theme-dark .text-red-400    { color:            #f87171    !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Stat cards
+   ───────────────────────────────────────────────────────────────────────────── */
+.stat-card {
+    background:   var(--card);
+    border:       1px solid var(--border);
+    box-shadow:   var(--shadow);
+    border-radius: var(--radius);
+    transition:   transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+    transform:  translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Section visibility */
+.section-hidden { display: none !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Live pulse indicator
+   ───────────────────────────────────────────────────────────────────────────── */
 .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 @keyframes pulse {
     0%, 100% { opacity: 1; }
-    50% { opacity: .5; }
+    50%       { opacity: 0.4; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Progress bars
+   ───────────────────────────────────────────────────────────────────────────── */
+.progress-track {
+    background:    var(--bar-bg);
+    border-radius: 9999px;
+    height:        6px;
+    overflow:      hidden;
+}
+.progress-fill {
+    height:        100%;
+    border-radius: 9999px;
+    transition:    width 0.5s ease;
+}
+
+/* Per-core grid */
+.cores-grid {
+    display:               grid;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap:                   4px;
+    margin-top:            8px;
+}
+.core-item {
+    font-size:  0.65rem;
+    text-align: center;
+    color:      var(--t3);
+}
+.core-bar {
+    height:        3px;
+    border-radius: 9999px;
+    background:    var(--bar-bg);
+    margin-top:    2px;
+    overflow:      hidden;
+}
+.core-bar-fill {
+    height:     100%;
+    background: #3b82f6;
+    transition: width 0.4s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Data values (monospace)
+   ───────────────────────────────────────────────────────────────────────────── */
+.val {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Network per-interface rows
+   ───────────────────────────────────────────────────────────────────────────── */
+.iface-row {
+    padding:       6px 0;
+    border-bottom: 1px solid var(--border);
+    color:         var(--t2);
+}
+.iface-row:last-child { border-bottom: none; }
+.iface-name {
+    font-family:   var(--mono);
+    font-size:     0.75rem;
+    font-weight:   600;
+    color:         var(--t1);
+}
+.iface-badge {
+    display:       inline-block;
+    font-size:     0.6rem;
+    padding:       1px 5px;
+    border-radius: 9999px;
+    background:    var(--bar-bg);
+    color:         var(--t3);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.iface-badge.up    { background: #064e3b; color: #6ee7b7; }
+.iface-badge.down  { background: #450a0a; color: #fca5a5; }
+
+body.theme-light .iface-badge.up   { background: #d1fae5; color: #065f46; }
+body.theme-light .iface-badge.down { background: #fee2e2; color: #991b1b; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Process table
+   ───────────────────────────────────────────────────────────────────────────── */
+.proc-table {
+    width:         100%;
+    border-collapse: collapse;
+    font-size:     0.78rem;
+    font-family:   var(--mono);
+    color:         var(--t2);
+}
+.proc-table th {
+    text-align:    left;
+    padding:       4px 8px;
+    color:         var(--t3);
+    font-weight:   500;
+    border-bottom: 1px solid var(--border);
+    font-family:   sans-serif;
+    font-size:     0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.proc-table td {
+    padding:       4px 8px;
+    border-bottom: 1px solid var(--bar-bg);
+    vertical-align: middle;
+    overflow:      hidden;
+    max-width:     160px;
+    text-overflow: ellipsis;
+    white-space:   nowrap;
+}
+.proc-table tr:last-child td { border-bottom: none; }
+.proc-table tr:hover td      { background: var(--card-hover); }
+.cpu-bar-inline {
+    display:        inline-block;
+    height:         6px;
+    border-radius:  3px;
+    background:     #3b82f6;
+    vertical-align: middle;
+    margin-left:    4px;
+    transition:     width 0.4s;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Docker container list
+   ───────────────────────────────────────────────────────────────────────────── */
+.container-list { font-size: 0.78rem; }
+.container-row {
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+    padding:       5px 0;
+    border-bottom: 1px solid var(--border);
+    color:         var(--t2);
+    font-family:   var(--mono);
+}
+.container-row:last-child { border-bottom: none; }
+.container-name  { flex: 1; font-weight: 600; color: var(--t1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.container-image { flex: 1; color: var(--t3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.container-state {
+    font-size:    0.65rem;
+    padding:      2px 6px;
+    border-radius: 9999px;
+}
+.state-running { background: #064e3b; color: #6ee7b7; }
+.state-exited  { background: #450a0a; color: #fca5a5; }
+.state-paused  { background: #1e3a5f; color: #93c5fd; }
+.state-created { background: var(--bar-bg); color: var(--t3); }
+
+body.theme-light .state-running { background: #d1fae5; color: #065f46; }
+body.theme-light .state-exited  { background: #fee2e2; color: #991b1b; }
+body.theme-light .state-paused  { background: #dbeafe; color: #1d4ed8; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GPU card
+   ───────────────────────────────────────────────────────────────────────────── */
+.gpu-stat-row {
+    display:       flex;
+    justify-content: space-between;
+    align-items:   center;
+    padding:       3px 0;
+    font-size:     0.8rem;
+    color:         var(--t3);
+}
+.gpu-stat-val {
+    font-family: var(--mono);
+    color:       var(--t2);
+    font-size:   0.8rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Battery card
+   ───────────────────────────────────────────────────────────────────────────── */
+.battery-body {
+    display:       flex;
+    align-items:   center;
+    gap:           12px;
+    margin-top:    8px;
+}
+.battery-shell {
+    position:      relative;
+    width:         56px;
+    height:        26px;
+    border:        2px solid var(--t3);
+    border-radius: 4px;
+    overflow:      visible;
+    flex-shrink:   0;
+}
+.battery-shell::after {
+    content:      '';
+    position:     absolute;
+    right:        -6px;
+    top:          50%;
+    transform:    translateY(-50%);
+    width:        4px;
+    height:       12px;
+    background:   var(--t3);
+    border-radius: 0 2px 2px 0;
+}
+.battery-fill {
+    position:     absolute;
+    left:         2px;
+    top:          2px;
+    bottom:       2px;
+    border-radius: 2px;
+    transition:   width 0.5s ease;
+}
+.battery-charging-icon {
+    position:     absolute;
+    inset:        0;
+    display:      flex;
+    align-items:  center;
+    justify-content: center;
+    font-size:    0.7rem;
+    color:        #fff;
+    pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Memory layout table
+   ───────────────────────────────────────────────────────────────────────────── */
+.mem-layout-grid {
+    display:               grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap:                   6px;
+    margin-top:            8px;
+}
+.mem-slot {
+    background:    var(--bar-bg);
+    border-radius: 4px;
+    padding:       6px 8px;
+    font-size:     0.7rem;
+    color:         var(--t3);
+}
+.mem-slot-size { font-family: var(--mono); color: var(--t1); font-size: 0.85rem; font-weight: 600; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Responsive tweaks
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .proc-table th:nth-child(4),
+    .proc-table td:nth-child(4) { display: none; }
+    .cores-grid { grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); }
 }
