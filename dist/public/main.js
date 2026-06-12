@@ -1,63 +1,35 @@
+// main.js
+
 let cpuChart, memoryChart;
 let cpuData = [], memoryData = [], timeLabels = [];
 let maxDataPoints = 20;
 
-// Variables for 15-second data averaging window
 let lastWindowId = null;
 let bufferedCpuPoints = [];
 let bufferedMemPoints = [];
 
-// Performance variables for mobile optimizations
 let chartsActive = false;
 let isMobile = false;
 let lastSuccessTimestamp = Date.now();
 
-// Utility function to extract cookie values
-function getThemeCookie() {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; theme=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return 'auto';
-}
-
-// Utility function to save cookie values
-function setThemeCookie(value) {
-    const expiry = new Date();
-    expiry.setTime(expiry.getTime() + (365 * 24 * 60 * 60 * 1000));
-    document.cookie = `theme=${value};path=/;expires=${expiry.toUTCString()};SameSite=Strict`;
-}
-
-// Applies requested visual theme to DOM elements
-function applySelectedTheme(mode) {
-    const root = document.documentElement;
-    root.classList.remove('theme-dark', 'theme-light');
-    
-    let target = mode;
-    if (mode === 'auto') {
-        target = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    
-    if (target === 'dark') {
-        root.classList.add('theme-dark');
-    } else {
-        root.classList.add('theme-light');
-    }
-    
-    document.getElementById('themeToggle').textContent = `Theme: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
-}
-
-// Cycle through theme options
 function toggleThemeMode() {
-    const current = getThemeCookie();
+    const store = localStorage.getItem('hfs_settings');
+    const settings = store ? JSON.parse(store) : {};
+    const current = settings.theme;
     let next = 'auto';
-    if (current === 'auto') next = 'light';
+    if (current === 'auto' || current === null) next = 'light';
     else if (current === 'light') next = 'dark';
     
-    setThemeCookie(next);
-    applySelectedTheme(next);
+    settings.theme = next;
+    localStorage.setItem('hfs_settings', JSON.stringify(settings));
+    updateThemeButtonText(next);
 }
 
-// Initialize structural layout constraints for Chart.js instances
+function updateThemeButtonText(theme) {
+    const displayTheme = theme === null ? 'auto' : theme;
+    document.getElementById('themeToggle').textContent = `Theme: ${displayTheme.charAt(0).toUpperCase() + displayTheme.slice(1)}`;
+}
+
 function initCharts() {
     const cpuCtx = document.getElementById('cpuChart').getContext('2d');
     const memoryCtx = document.getElementById('memoryChart').getContext('2d');
@@ -108,10 +80,9 @@ function initCharts() {
     });
 }
 
-// Processes incoming parameters into a 15-second data bundle to trace averages
 function clearAndBundleFifteenSecondWindows(rawCpu, rawMem) {
     const currentTimeMs = Date.now();
-    const currentWindowId = Math.floor(currentTimeMs / 15000); // 15,000ms sliding windows
+    const currentWindowId = Math.floor(currentTimeMs / 15000);
 
     if (lastWindowId === null) {
         lastWindowId = currentWindowId;
@@ -194,7 +165,6 @@ function formatUptime(seconds) {
     return days > 0 ? `${days}d ${hours}h ${minutes}m` : `${hours}h ${minutes}m`;
 }
 
-// Heartbeat routine computing precise delay increments and color-coding tags
 function kickstartUpdateTimer() {
     setInterval(() => {
         const secondsElapsed = Math.floor((Date.now() - lastSuccessTimestamp) / 1000);
@@ -231,7 +201,6 @@ async function fetchStats() {
             maxDataPoints = data.config.maxDataPoints;
         }
 
-        // Host Name / Title Assignment
         if (data.system) {
             document.getElementById('systemFqdn').textContent = data.system.fqdn || data.system.hostname;
             document.getElementById('systemPlatform').textContent = `${data.system.distro} ${data.system.release} (${data.system.arch})`;
@@ -242,7 +211,6 @@ async function fetchStats() {
             document.getElementById('systemUptime').textContent = `Uptime: ${formatUptime(data.system.uptime)}`;
         }
 
-        // Processing Unit Execution Metrics
         if (data.cpu) {
             const currentCpuLoad = data.cpu.load;
             document.getElementById('cpuUsage').textContent = `${currentCpuLoad.toFixed(1)}%`;
@@ -252,7 +220,7 @@ async function fetchStats() {
             if (data.cpu.cores) {
                 document.getElementById('cpuCores').innerHTML = data.cpu.cores.map((load, i) => `
                     <div class="core-item">
-                        C${i}
+                        Core ${i}
                         <div class="core-bar"><div class="core-bar-fill" style="width: ${load}%"></div></div>
                     </div>
                 `).join('');
@@ -267,13 +235,11 @@ async function fetchStats() {
                 document.getElementById('tempStatus').className = `text-sm mt-1 font-medium ${classColor}`;
             }
             
-            // Background array computation regardless of layout dimensions
             if (data.memory) {
                 clearAndBundleFifteenSecondWindows(currentCpuLoad, data.memory.usage);
             }
         }
 
-        // Virtual and Physical Memory Spaces
         if (data.memory) {
             const activeMemUsage = data.memory.usage.toFixed(1);
             document.getElementById('memUsage').textContent = `${activeMemUsage}%`;
@@ -289,7 +255,6 @@ async function fetchStats() {
             `;
         }
 
-        // Active Hard Drives Partition Map
         const diskBox = document.getElementById('diskContainer');
         if (data.disk && data.disk.filesystems) {
             diskBox.innerHTML = data.disk.filesystems.map(vol => `
@@ -305,7 +270,6 @@ async function fetchStats() {
             `).join('');
         }
 
-        // Connected Network Interfaces Traffic Speed 
         const netBox = document.getElementById('networkContainer');
         if (data.network && data.network.interfaces && data.network.stats) {
             const traceStats = {};
@@ -314,16 +278,28 @@ async function fetchStats() {
             netBox.innerHTML = data.network.interfaces.map(card => {
                 const dataMetric = traceStats[card.iface];
                 if (!dataMetric) return '';
+                
+                const ipv4 = card.ip4 || '-';
+                const ipv6 = card.ip6 ? card.ip6.split('/')[0] : '-';
+                const mac = card.mac || '-';
+                const speed = card.speed ? `${card.speed} Mbps` : '-';
+                
                 return `
-                    <div class="iface-row text-xs">
-                        <div class="flex justify-between items-center mb-1">
+                    <div class="iface-card">
+                        <div class="flex justify-between items-start mb-2">
                             <div>
-                                <span class="iface-name mr-1">${card.iface}</span>
+                                <span class="iface-name">${card.iface}</span>
                                 <span class="iface-badge ${card.operstate === 'up' ? 'up' : 'down'}">${card.operstate}</span>
                             </div>
-                            <div class="text-[11px] text-gray-500 font-mono text-right">
-                                <div>Down: ${formatBytes(dataMetric.rx_sec)}/s</div>
-                                <div>Up: ${formatBytes(dataMetric.tx_sec)}/s</div>
+                            <span class="text-xs text-gray-500">${speed}</span>
+                        </div>
+                        <div class="space-y-1 text-xs">
+                            <div class="font-mono text-gray-600"><span class="text-gray-400">IPv4:</span> ${ipv4}</div>
+                            <div class="font-mono text-gray-600"><span class="text-gray-400">IPv6:</span> ${ipv6}</div>
+                            <div class="font-mono text-gray-600"><span class="text-gray-400">MAC:</span> ${mac}</div>
+                            <div class="flex justify-between text-gray-500 pt-1 border-t border-gray-200">
+                                <span>↓ ${formatBytes(dataMetric.rx_sec)}/s</span>
+                                <span>↑ ${formatBytes(dataMetric.tx_sec)}/s</span>
                             </div>
                         </div>
                     </div>
@@ -331,20 +307,22 @@ async function fetchStats() {
             }).join('');
         }
 
-        // Top CPU Consuming Task Table Rows
         const procBox = document.getElementById('processContainer');
         if (data.processes && data.processes.top) {
             document.getElementById('procSummary').textContent = `All: ${data.processes.all} | Active: ${data.processes.running}`;
             procBox.innerHTML = data.processes.top.map(p => `
                 <tr class="border-b border-gray-100">
-                    <td class="val text-gray-400">${p.pid}</td>
-                    <td class="truncate max-w-[70px]">${p.user}</td>
-                    <td class="font-semibold text-gray-700 truncate max-w-[150px]" title="${p.command}">${p.name}</td>
-                    <td class="val">
+                    <td class="val text-gray-400 max-w-[50px]">${p.pid}</td>
+                    <td class="max-w-[60px] truncate">${p.user}</td>
+                    <td class="font-semibold text-gray-700 truncate max-w-[140px]" title="${p.command}">${p.name}</td>
+                    <td class="val hidden sm:table-cell">
                         ${p.cpu.toFixed(1)}%
                         <div class="cpu-bar-inline hidden sm:inline-block" style="width: ${Math.min(p.cpu, 60)}px"></div>
                     </td>
-                    <td class="val">${p.mem.toFixed(1)}%</td>
+                    <td class="val hidden sm:table-cell">
+                        ${p.mem.toFixed(1)}%
+                        <div class="mem-bar-inline hidden sm:inline-block" style="width: ${Math.min(p.mem, 60)}px"></div>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -356,12 +334,13 @@ async function fetchStats() {
     }
 }
 
-// Master Execution Thread
 document.addEventListener('DOMContentLoaded', () => {
-    applySelectedTheme(getThemeCookie());
+    const store = localStorage.getItem('hfs_settings');
+    const currentTheme = store ? JSON.parse(store).theme : null;
+    updateThemeButtonText(currentTheme);
+    
     document.getElementById('themeToggle').addEventListener('click', toggleThemeMode);
     
-    // Check mobile dimension configurations before loading heavy modules
     checkDeviceCapabilitiesAndSetupPlaceholders();
     window.addEventListener('resize', checkDeviceCapabilitiesAndSetupPlaceholders);
     
