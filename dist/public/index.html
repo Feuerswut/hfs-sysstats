@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>System Statistics Dashboard - HFS</title>
 
     <script src="/~/stats/tailwind.js"></script>
@@ -13,14 +13,13 @@
     <link rel="stylesheet" href="/~/stats/styles.css">
 
     <script src="/~/stats/darkmode.js" defer></script>
-    <script src="/~/stats/icons.js" defer></script>
     <script src="/~/stats/main.js" defer></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen transition-colors duration-200">
     <div class="container mx-auto px-4 py-8">
-        
-        <!-- Responsive Header -->aa
+
+        <!-- Header -->
         <div class="mb-8">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -28,12 +27,13 @@
                     <p class="text-gray-600 mt-1" id="systemFqdn">Loading Host Information...</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- Manual Theme Selector Button -->
-                    <button id="themeToggle" class="px-3 py-2 text-xs font-semibold rounded border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 transition-all h-10 flex items-center">
+                    <!-- Theme Toggle -->
+                    <button id="themeToggle"
+                        class="h-8 px-3 text-xs font-semibold rounded border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 transition-all">
                         Theme: Auto
                     </button>
-                    <!-- Enhanced Dynamic Connectivity Indicator Block -->
-                    <div class="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm min-w-[150px] h-10">
+                    <!-- Live Status Indicator -->
+                    <div class="flex items-center h-8 bg-white border border-gray-200 rounded-lg px-3 shadow-sm min-w-[150px]">
                         <div id="statusDot" class="pulse-dot w-3 h-3 bg-green-500 rounded-full mr-2"></div>
                         <span id="statusText" class="text-sm font-medium text-gray-700 mr-2">Live</span>
                         <span class="text-xs text-gray-400 ml-auto font-mono" id="lastUpdate">updated 0s ago</span>
@@ -42,12 +42,12 @@
             </div>
         </div>
 
-        <!-- System Alerts Box -->
+        <!-- Error Alert -->
         <div id="errorAlert" class="hidden mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                 </div>
                 <div class="ml-3">
@@ -57,15 +57,17 @@
             </div>
         </div>
 
-        <!-- Realtime Top Cards Grid -->
+        <!-- Top Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- CPU Load Card -->
+
+            <!-- CPU -->
             <div class="stat-card p-6 flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-lg font-semibold text-gray-700">CPU Usage</h3>
                         <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
                         </svg>
                     </div>
                     <p class="text-2xl font-bold text-blue-600" id="cpuUsage">--.--%</p>
@@ -77,12 +79,13 @@
                 <div id="cpuCores" class="cores-grid"></div>
             </div>
 
-            <!-- Memory Consumption Card -->
+            <!-- Memory -->
             <div class="stat-card p-6">
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-lg font-semibold text-gray-700">Memory</h3>
                     <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
                     </svg>
                 </div>
                 <p class="text-2xl font-bold text-green-600" id="memUsage">--.--%</p>
@@ -95,31 +98,34 @@
                 </div>
             </div>
 
-            <!-- Core Thermal Readings Card -->
+            <!-- Temperature -->
             <div class="stat-card p-6 flex flex-col justify-center">
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-lg font-semibold text-gray-700">Temperature</h3>
                     <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                     </svg>
                 </div>
                 <p class="text-3xl font-bold text-red-600 mt-2" id="tempValue">--°C</p>
                 <p class="text-sm mt-1 text-gray-500 font-medium" id="tempStatus">Loading...</p>
             </div>
 
-            <!-- Distro and Platform Runtime Data Card -->
+            <!-- System Info -->
             <div class="stat-card p-6 flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-700">System Info</h3>
                         <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                     </div>
                     <div class="space-y-2">
                         <p class="text-sm text-gray-800 font-medium truncate" id="systemPlatform">Loading...</p>
                         <p class="text-xs text-gray-500 truncate" id="systemKernel">Kernel: --</p>
-                        <p class="text-xs text-gray-500 col-span-2 line-clamp-2" id="systemHardware">Hardware: --</p>
+                        <!-- hardware can be long: allow 2 lines before ellipsis -->
+                        <p class="text-xs text-gray-500 system-hardware-text" id="systemHardware">Hardware: --</p>
                     </div>
                 </div>
                 <div class="mt-4 pt-3 border-t border-gray-100">
@@ -128,16 +134,19 @@
             </div>
         </div>
 
-        <!-- Infrastructure Status Layout Blocks -->
+        <!-- Infrastructure Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Left Side Elements: File Systems & Network Adapters -->
+
+            <!-- Left column: Storage + Network -->
             <div class="col-span-1 flex flex-col gap-6">
-                <!-- Mounted Volumes Partition -->
+
+                <!-- Storage Volumes -->
                 <div class="stat-card p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-700">Storage Volumes</h3>
                         <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
                         </svg>
                     </div>
                     <div id="diskContainer" class="space-y-4 max-h-[280px] overflow-y-auto pr-1">
@@ -145,40 +154,46 @@
                     </div>
                 </div>
 
-                <!-- Network Interface Cards Partition -->
+                <!-- Network Interfaces -->
                 <div class="stat-card p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-700">Network Interfaces</h3>
                         <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
                         </svg>
                     </div>
-                    <div id="networkContainer" class="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+                    <div id="networkContainer" class="space-y-3 max-h-[320px] overflow-y-auto pr-1">
                         <p class="text-sm text-gray-500">Resolving connections...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Heavy Tasks and Running Processes Matrix -->
+            <!-- Top Processes -->
             <div class="col-span-1 lg:col-span-2">
                 <div class="stat-card p-6 h-full flex flex-col">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-700">Top Processes</h3>
-                        <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded" id="procSummary">Reading...</span>
+                        <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded"
+                            id="procSummary">Reading...</span>
                     </div>
                     <div class="overflow-x-auto flex-1">
                         <table class="proc-table w-full">
                             <thead>
                                 <tr>
-                                    <th>PID</th>
-                                    <th>User</th>
-                                    <th>Command</th>
-                                    <th class="hidden sm:table-cell">CPU %</th>
-                                    <th class="hidden sm:table-cell">Mem %</th>
+                                    <th class="pid-col">PID</th>
+                                    <th class="user-col">User</th>
+                                    <th class="cmd-col">Command</th>
+                                    <th class="cpu-val-col">CPU %</th>
+                                    <th class="bar-col desktop-only"></th>
+                                    <th class="mem-val-col">Mem %</th>
+                                    <th class="bar-col desktop-only"></th>
                                 </tr>
                             </thead>
                             <tbody id="processContainer">
-                                <tr><td colspan="5" class="text-center py-4 text-gray-500">Sifting process table...</td></tr>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-gray-500">Sifting process table...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -186,32 +201,43 @@
             </div>
         </div>
 
-        <!-- Historical Performance Curves Section -->
+        <!-- Historical Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- CPU Load Canvas Wrapper -->
+
+            <!-- CPU Chart -->
             <div class="stat-card p-6 flex flex-col">
                 <h3 class="text-lg font-semibold text-gray-700 mb-4">CPU History (15s Avg)</h3>
                 <div class="chart-container flex-1 min-h-[200px] relative">
-                    <div id="cpuMobilePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 rounded border-2 border-dashed border-gray-300 cursor-pointer hidden z-20 hover:bg-gray-100 transition">
-                        <svg class="w-8 h-8 text-blue-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <div id="cpuMobilePlaceholder"
+                        class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 rounded border-2 border-dashed border-gray-300 cursor-pointer hidden z-20 hover:bg-gray-100 transition">
+                        <svg class="w-8 h-8 text-blue-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
                         <span class="text-xs font-semibold text-blue-600 px-4 text-center">Tap to load interactive CPU chart</span>
                     </div>
                     <canvas id="cpuChart"></canvas>
                 </div>
             </div>
-            <!-- Memory Allocation Canvas Wrapper -->
+
+            <!-- Memory Chart -->
             <div class="stat-card p-6 flex flex-col">
                 <h3 class="text-lg font-semibold text-gray-700 mb-4">Memory History (15s Avg)</h3>
                 <div class="chart-container flex-1 min-h-[200px] relative">
-                    <div id="memMobilePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 rounded border-2 border-dashed border-gray-300 cursor-pointer hidden z-20 hover:bg-gray-100 transition">
-                        <svg class="w-8 h-8 text-green-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <div id="memMobilePlaceholder"
+                        class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 rounded border-2 border-dashed border-gray-300 cursor-pointer hidden z-20 hover:bg-gray-100 transition">
+                        <svg class="w-8 h-8 text-green-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
                         <span class="text-xs font-semibold text-green-600 px-4 text-center">Tap to load interactive Memory chart</span>
                     </div>
                     <canvas id="memoryChart"></canvas>
                 </div>
             </div>
+            
         </div>
     </div>
-</body>
 
+</body>
 </html>

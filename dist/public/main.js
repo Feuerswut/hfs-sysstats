@@ -1,39 +1,54 @@
-// main.js
-
 let cpuChart, memoryChart;
 let cpuData = [], memoryData = [], timeLabels = [];
 let maxDataPoints = 20;
 
+// Variables for 15-second data averaging window
 let lastWindowId = null;
 let bufferedCpuPoints = [];
 let bufferedMemPoints = [];
 
+// Performance variables for mobile optimizations
 let chartsActive = false;
 let isMobile = false;
 let lastSuccessTimestamp = Date.now();
 
-function toggleThemeMode() {
+function getThemeStorage() {
     const store = localStorage.getItem('hfs_settings');
-    const settings = store ? JSON.parse(store) : {};
-    const current = settings.theme;
-    let next = 'auto';
-    if (current === 'auto' || current === null) next = 'light';
-    else if (current === 'light') next = 'dark';
-    
-    settings.theme = next;
-    localStorage.setItem('hfs_settings', JSON.stringify(settings));
-    updateThemeButtonText(next);
+    return store ? JSON.parse(store).theme : 'auto';
 }
 
-function updateThemeButtonText(theme) {
-    const displayTheme = theme === null ? 'auto' : theme;
-    document.getElementById('themeToggle').textContent = `Theme: ${displayTheme.charAt(0).toUpperCase() + displayTheme.slice(1)}`;
+function setThemeStorage(value) {
+    const store = localStorage.getItem('hfs_settings');
+    const parsed = store ? JSON.parse(store) : {};
+    parsed.theme = value;
+    localStorage.setItem('hfs_settings', JSON.stringify(parsed));
+}
+
+function updateThemeButtonLabel(mode) {
+    document.getElementById('themeToggle').textContent = `Theme: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
+}
+
+function toggleThemeMode() {
+    const current = getThemeStorage();
+    let next = 'auto';
+    if (current === 'auto') next = 'light';
+    else if (current === 'light') next = 'dark';
+
+    setThemeStorage(next);
+    updateThemeButtonLabel(next);
+    // darkmode.js listens to the storage event and applies the theme globally
+    // We fire storage manually since it only fires cross-tab natively
+    window.dispatchEvent(new StorageEvent('storage', {
+        key: 'hfs_settings',
+        newValue: localStorage.getItem('hfs_settings'),
+        storageArea: localStorage
+    }));
 }
 
 function initCharts() {
     const cpuCtx = document.getElementById('cpuChart').getContext('2d');
     const memoryCtx = document.getElementById('memoryChart').getContext('2d');
-    
+
     const baseConfig = {
         type: 'line',
         options: {
@@ -45,10 +60,10 @@ function initCharts() {
                 x: { ticks: { font: { size: 9 } } }
             },
             elements: { point: { radius: 1, hoverRadius: 4 }, line: { borderWidth: 2 } },
-            animation: { duration: 0 } 
+            animation: { duration: 0 }
         }
     };
-    
+
     cpuChart = new Chart(cpuCtx, {
         ...baseConfig,
         data: {
@@ -63,7 +78,7 @@ function initCharts() {
             }]
         }
     });
-    
+
     memoryChart = new Chart(memoryCtx, {
         ...baseConfig,
         data: {
@@ -168,7 +183,7 @@ function formatUptime(seconds) {
 function kickstartUpdateTimer() {
     setInterval(() => {
         const secondsElapsed = Math.floor((Date.now() - lastSuccessTimestamp) / 1000);
-        
+
         const dotElement = document.getElementById('statusDot');
         const textElement = document.getElementById('statusText');
         const stampElement = document.getElementById('lastUpdate');
@@ -176,14 +191,14 @@ function kickstartUpdateTimer() {
         stampElement.textContent = `updated ${secondsElapsed}s ago`;
 
         if (secondsElapsed < 15) {
-            dotElement.className = "pulse-dot w-3 h-3 bg-green-500 rounded-full mr-2";
-            textElement.textContent = "Live";
-        } else if (secondsElapsed >= 15 && secondsElapsed < 60) {
-            dotElement.className = "w-3 h-3 bg-yellow-500 rounded-full mr-2";
-            textElement.textContent = "Waiting";
+            dotElement.className = 'pulse-dot w-3 h-3 bg-green-500 rounded-full mr-2';
+            textElement.textContent = 'Live';
+        } else if (secondsElapsed < 60) {
+            dotElement.className = 'w-3 h-3 bg-yellow-500 rounded-full mr-2';
+            textElement.textContent = 'Waiting';
         } else {
-            dotElement.className = "w-3 h-3 bg-gray-400 rounded-full mr-2";
-            textElement.textContent = "Offline";
+            dotElement.className = 'w-3 h-3 bg-gray-400 rounded-full mr-2';
+            textElement.textContent = 'Offline';
         }
     }, 1000);
 }
@@ -192,15 +207,16 @@ async function fetchStats() {
     try {
         const res = await fetch('/~/stats/api');
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        
+
         const data = await res.json();
         document.getElementById('errorAlert').classList.add('hidden');
         lastSuccessTimestamp = Date.now();
-        
+
         if (data.config && data.config.maxDataPoints) {
             maxDataPoints = data.config.maxDataPoints;
         }
 
+        // Host Name / Title Assignment
         if (data.system) {
             document.getElementById('systemFqdn').textContent = data.system.fqdn || data.system.hostname;
             document.getElementById('systemPlatform').textContent = `${data.system.distro} ${data.system.release} (${data.system.arch})`;
@@ -211,12 +227,13 @@ async function fetchStats() {
             document.getElementById('systemUptime').textContent = `Uptime: ${formatUptime(data.system.uptime)}`;
         }
 
+        // Processing Unit Execution Metrics
         if (data.cpu) {
             const currentCpuLoad = data.cpu.load;
             document.getElementById('cpuUsage').textContent = `${currentCpuLoad.toFixed(1)}%`;
             document.getElementById('cpuDetails').textContent = `User: ${data.cpu.loadUser.toFixed(1)}% • Sys: ${data.cpu.loadSystem.toFixed(1)}%`;
             document.getElementById('cpuBar').style.width = `${currentCpuLoad}%`;
-            
+
             if (data.cpu.cores) {
                 document.getElementById('cpuCores').innerHTML = data.cpu.cores.map((load, i) => `
                     <div class="core-item">
@@ -225,7 +242,7 @@ async function fetchStats() {
                     </div>
                 `).join('');
             }
-            
+
             if (data.cpu.temperature && data.cpu.temperature.main !== null) {
                 const degrees = data.cpu.temperature.main;
                 document.getElementById('tempValue').textContent = `${degrees.toFixed(1)}°C`;
@@ -234,18 +251,19 @@ async function fetchStats() {
                 document.getElementById('tempStatus').textContent = state;
                 document.getElementById('tempStatus').className = `text-sm mt-1 font-medium ${classColor}`;
             }
-            
+
             if (data.memory) {
                 clearAndBundleFifteenSecondWindows(currentCpuLoad, data.memory.usage);
             }
         }
 
+        // Virtual and Physical Memory Spaces
         if (data.memory) {
             const activeMemUsage = data.memory.usage.toFixed(1);
             document.getElementById('memUsage').textContent = `${activeMemUsage}%`;
             document.getElementById('memDetails').textContent = `${formatBytes(data.memory.active)} / ${formatBytes(data.memory.total)}`;
             document.getElementById('memBar').style.width = `${activeMemUsage}%`;
-            
+
             const totalSwap = data.memory.swaptotal || 0;
             const activeSwap = data.memory.swapused || 0;
             const swapPercentage = totalSwap ? ((activeSwap / totalSwap) * 100).toFixed(1) : 0;
@@ -255,6 +273,7 @@ async function fetchStats() {
             `;
         }
 
+        // Active Hard Drives Partition Map
         const diskBox = document.getElementById('diskContainer');
         if (data.disk && data.disk.filesystems) {
             diskBox.innerHTML = data.disk.filesystems.map(vol => `
@@ -270,6 +289,7 @@ async function fetchStats() {
             `).join('');
         }
 
+        // Connected Network Interfaces Traffic Speed 
         const netBox = document.getElementById('networkContainer');
         if (data.network && data.network.interfaces && data.network.stats) {
             const traceStats = {};
@@ -278,50 +298,59 @@ async function fetchStats() {
             netBox.innerHTML = data.network.interfaces.map(card => {
                 const dataMetric = traceStats[card.iface];
                 if (!dataMetric) return '';
-                
-                const ipv4 = card.ip4 || '-';
-                const ipv6 = card.ip6 ? card.ip6.split('/')[0] : '-';
-                const mac = card.mac || '-';
-                const speed = card.speed ? `${card.speed} Mbps` : '-';
-                
+
+                const ipv4 = card.ip4 || card.ip4address || null;
+                const ipv6 = card.ip6 || card.ip6address || null;
+                const mac  = card.mac || null;
+                const speed = card.speed != null && card.speed > 0 ? `${card.speed} Mbps` : null;
+
+                const rxTotal = dataMetric.rx_bytes != null ? formatBytes(dataMetric.rx_bytes) : null;
+                const txTotal = dataMetric.tx_bytes != null ? formatBytes(dataMetric.tx_bytes) : null;
+
                 return `
-                    <div class="iface-card">
-                        <div class="flex justify-between items-start mb-2">
+                    <div class="iface-row text-xs">
+                        <div class="flex justify-between items-center mb-1">
                             <div>
-                                <span class="iface-name">${card.iface}</span>
+                                <span class="iface-name mr-1">${card.iface}</span>
                                 <span class="iface-badge ${card.operstate === 'up' ? 'up' : 'down'}">${card.operstate}</span>
                             </div>
-                            <span class="text-xs text-gray-500">${speed}</span>
-                        </div>
-                        <div class="space-y-1 text-xs">
-                            <div class="font-mono text-gray-600"><span class="text-gray-400">IPv4:</span> ${ipv4}</div>
-                            <div class="font-mono text-gray-600"><span class="text-gray-400">IPv6:</span> ${ipv6}</div>
-                            <div class="font-mono text-gray-600"><span class="text-gray-400">MAC:</span> ${mac}</div>
-                            <div class="flex justify-between text-gray-500 pt-1 border-t border-gray-200">
-                                <span>↓ ${formatBytes(dataMetric.rx_sec)}/s</span>
-                                <span>↑ ${formatBytes(dataMetric.tx_sec)}/s</span>
+                            <div class="text-[11px] text-gray-500 font-mono text-right">
+                                <div>↓ ${formatBytes(dataMetric.rx_sec)}/s</div>
+                                <div>↑ ${formatBytes(dataMetric.tx_sec)}/s</div>
                             </div>
+                        </div>
+                        <div class="iface-details">
+                            ${ipv4   ? `<div><span class="iface-label">IPv4</span><span class="iface-value">${ipv4}</span></div>` : ''}
+                            ${ipv6   ? `<div><span class="iface-label">IPv6</span><span class="iface-value iface-value--ip6">${ipv6}</span></div>` : ''}
+                            ${mac    ? `<div><span class="iface-label">MAC</span><span class="iface-value">${mac}</span></div>` : ''}
+                            ${speed  ? `<div><span class="iface-label">Speed</span><span class="iface-value">${speed}</span></div>` : ''}
+                            ${(rxTotal || txTotal) ? `<div><span class="iface-label">Total</span><span class="iface-value">↓${rxTotal ?? '–'} ↑${txTotal ?? '–'}</span></div>` : ''}
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
+        // Top Processes
         const procBox = document.getElementById('processContainer');
         if (data.processes && data.processes.top) {
             document.getElementById('procSummary').textContent = `All: ${data.processes.all} | Active: ${data.processes.running}`;
             procBox.innerHTML = data.processes.top.map(p => `
                 <tr class="border-b border-gray-100">
-                    <td class="val text-gray-400 max-w-[50px]">${p.pid}</td>
-                    <td class="max-w-[60px] truncate">${p.user}</td>
-                    <td class="font-semibold text-gray-700 truncate max-w-[140px]" title="${p.command}">${p.name}</td>
-                    <td class="val hidden sm:table-cell">
-                        ${p.cpu.toFixed(1)}%
-                        <div class="cpu-bar-inline hidden sm:inline-block" style="width: ${Math.min(p.cpu, 60)}px"></div>
+                    <td class="val text-gray-400 pid-col">${p.pid}</td>
+                    <td class="user-col truncate">${p.user}</td>
+                    <td class="cmd-col font-semibold text-gray-700 truncate" title="${p.command}">${p.name}</td>
+                    <td class="val cpu-val-col">${p.cpu.toFixed(1)}%</td>
+                    <td class="bar-col desktop-only">
+                        <div class="proc-bar-track">
+                            <div class="proc-bar-fill bg-blue-500" style="width: ${Math.min(p.cpu, 100)}%"></div>
+                        </div>
                     </td>
-                    <td class="val hidden sm:table-cell">
-                        ${p.mem.toFixed(1)}%
-                        <div class="mem-bar-inline hidden sm:inline-block" style="width: ${Math.min(p.mem, 60)}px"></div>
+                    <td class="val mem-val-col">${p.mem.toFixed(1)}%</td>
+                    <td class="bar-col desktop-only">
+                        <div class="proc-bar-track">
+                            <div class="proc-bar-fill bg-green-500" style="width: ${Math.min(p.mem, 100)}%"></div>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -334,19 +363,18 @@ async function fetchStats() {
     }
 }
 
+// Master Execution Thread
 document.addEventListener('DOMContentLoaded', () => {
-    const store = localStorage.getItem('hfs_settings');
-    const currentTheme = store ? JSON.parse(store).theme : null;
-    updateThemeButtonText(currentTheme);
-    
+    updateThemeButtonLabel(getThemeStorage());
+
     document.getElementById('themeToggle').addEventListener('click', toggleThemeMode);
-    
+
     checkDeviceCapabilitiesAndSetupPlaceholders();
     window.addEventListener('resize', checkDeviceCapabilitiesAndSetupPlaceholders);
-    
+
     document.getElementById('cpuMobilePlaceholder').addEventListener('click', loadMobileChartsDefensively);
     document.getElementById('memMobilePlaceholder').addEventListener('click', loadMobileChartsDefensively);
-    
+
     fetchStats();
     kickstartUpdateTimer();
     setInterval(fetchStats, 3000);
