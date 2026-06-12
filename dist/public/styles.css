@@ -1,6 +1,5 @@
-/* ─────────────────────────────────────────────────────────────────────────────
-   CSS variables — light & dark
-   ───────────────────────────────────────────────────────────────────────────── */
+/* styles.css */
+
 :root {
     --bg:          #f3f4f6;
     --card:        #ffffff;
@@ -31,16 +30,12 @@ body.theme-dark, html.theme-dark body {
     --shadow-lg:   0 4px 6px -1px rgb(0 0 0 / 0.4);
 }
 
-/* Override chart component constraints directly from standard styles to combat enormous canvases */
 .chart-container {
     position: relative !important;
     max-height: 220px !important; 
     width: 100% !important;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Tailwind color override definitions for deep dark mode integration
-   ───────────────────────────────────────────────────────────────────────────── */
 html.theme-dark body { background-color: var(--bg) !important; color: var(--t1); }
 .theme-dark .bg-white, .theme-dark .stat-card { background-color: var(--card) !important; border-color: var(--border) !important; }
 .theme-dark .text-gray-900 { color: var(--t1) !important; }
@@ -53,7 +48,6 @@ html.theme-dark body { background-color: var(--bg) !important; color: var(--t1);
 .theme-dark button#themeToggle { background: var(--card); border-color: var(--border); color: var(--t1); }
 .theme-dark button#themeToggle:hover { background: var(--card-hover); }
 
-/* Static Cards */
 .stat-card {
     background:   var(--card);
     border:       1px solid var(--border);
@@ -66,38 +60,37 @@ html.theme-dark body { background-color: var(--bg) !important; color: var(--t1);
     box-shadow: var(--shadow-lg);
 }
 
-/* Heartbeat Indicator Animation */
 .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50%       { opacity: 0.4; }
 }
 
-/* Dynamic Allocation Bars */
 .progress-track { background: var(--bar-bg); border-radius: 9999px; height: 6px; overflow: hidden; }
 .progress-fill { height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
 
-/* Dedicated Process Tables */
 .proc-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; font-family: var(--mono); color: var(--t2); }
 .proc-table th { text-align: left; padding: 6px 8px; color: var(--t3); border-bottom: 1px solid var(--border); font-family: sans-serif; font-size: 0.7rem; text-transform: uppercase; }
-.proc-table td { padding: 5px 8px; border-bottom: 1px solid var(--bar-bg); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proc-table td { padding: 5px 8px; border-bottom: 1px solid var(--bar-bg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .proc-table tr:hover td { background: var(--card-hover); }
-.cpu-bar-inline { display: inline-block; height: 6px; border-radius: 3px; background: #3b82f6; vertical-align: middle; margin-left: 4px; }
 
-/* Micro CPU Grid layouts */
-.cores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap: 4px; margin-top: 6px; }
-.core-item { font-size: 0.62rem; text-align: center; color: var(--t3); font-family: var(--mono); }
-.core-bar { height: 3px; border-radius: 9999px; background: var(--bar-bg); overflow: hidden; }
+.cpu-bar-inline { display: inline-block; height: 6px; border-radius: 3px; background: #3b82f6; vertical-align: middle; margin-left: 4px; }
+.mem-bar-inline { display: inline-block; height: 6px; border-radius: 3px; background: #22c55e; vertical-align: middle; margin-left: 4px; }
+
+.cores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 4px; margin-top: 6px; }
+.core-item { font-size: 0.7rem; text-align: center; color: var(--t3); font-family: var(--mono); }
+.core-bar { height: 3px; border-radius: 9999px; background: var(--bar-bg); overflow: hidden; margin-top: 2px; }
 .core-bar-fill { height: 100%; background: #3b82f6; }
 
-/* Network Nodes Rows */
-.iface-row { padding: 6px 0; border-bottom: 1px solid var(--border); color: var(--t2); }
-.iface-row:last-child { border-bottom: none; }
-.iface-name { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; color: var(--t1); }
-.iface-badge { display: inline-block; font-size: 0.6rem; padding: 1px 5px; border-radius: 9999px; font-weight: bold; }
+.iface-card { padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-hover); margin-bottom: 8px; }
+.iface-card:last-child { margin-bottom: 0; }
+.iface-name { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--t1); }
+.iface-badge { display: inline-block; font-size: 0.6rem; padding: 2px 6px; border-radius: 9999px; font-weight: bold; margin-left: 6px; }
 .iface-badge.up { background: #d1fae5; color: #065f46; }
 .iface-badge.down { background: #fee2e2; color: #991b1b; }
 .theme-dark .iface-badge.up { background: #064e3b; color: #6ee7b7; }
 .theme-dark .iface-badge.down { background: #450a0a; color: #fca5a5; }
 
 .val { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

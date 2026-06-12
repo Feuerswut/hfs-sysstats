@@ -1,32 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>System Statistics Dashboard - HFS</title>
+
     <script src="/~/stats/tailwind.js"></script>
     <script src="/~/stats/chart.min.js"></script>
+
     <link rel="stylesheet" href="/~/stats/styles.css">
-    <script>
-        // Inline execution block to prevent theme flickering on page load
-        (function() {
-            const cookies = `; ${document.cookie}`;
-            const parts = cookies.split(`; theme=`);
-            let theme = 'auto';
-            if (parts.length === 2) theme = parts.pop().split(';').shift();
-            
-            if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('theme-dark');
-                document.styleSheets[0]?.insertRule('body { background-color: #0d1117 !important; }', 0);
-            }
-        })();
-    </script>
+
+    <script src="/~/stats/darkmode.js" defer></script>
+    <script src="/~/stats/icons.js" defer></script>
     <script src="/~/stats/main.js" defer></script>
 </head>
+
 <body class="bg-gray-100 min-h-screen transition-colors duration-200">
     <div class="container mx-auto px-4 py-8">
         
-        <!-- Responsive Header: Content flows in column layout on mobile to keep live status below hostname -->
+        <!-- Responsive Header -->aa
         <div class="mb-8">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -35,11 +29,11 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <!-- Manual Theme Selector Button -->
-                    <button id="themeToggle" class="px-3 py-1.5 text-xs font-semibold rounded border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 transition-all">
+                    <button id="themeToggle" class="px-3 py-2 text-xs font-semibold rounded border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 transition-all h-10 flex items-center">
                         Theme: Auto
                     </button>
                     <!-- Enhanced Dynamic Connectivity Indicator Block -->
-                    <div class="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm min-w-[150px]">
+                    <div class="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm min-w-[150px] h-10">
                         <div id="statusDot" class="pulse-dot w-3 h-3 bg-green-500 rounded-full mr-2"></div>
                         <span id="statusText" class="text-sm font-medium text-gray-700 mr-2">Live</span>
                         <span class="text-xs text-gray-400 ml-auto font-mono" id="lastUpdate">updated 0s ago</span>
@@ -125,7 +119,7 @@
                     <div class="space-y-2">
                         <p class="text-sm text-gray-800 font-medium truncate" id="systemPlatform">Loading...</p>
                         <p class="text-xs text-gray-500 truncate" id="systemKernel">Kernel: --</p>
-                        <p class="text-xs text-gray-500 truncate" id="systemHardware">Hardware: --</p>
+                        <p class="text-xs text-gray-500 col-span-2 line-clamp-2" id="systemHardware">Hardware: --</p>
                     </div>
                 </div>
                 <div class="mt-4 pt-3 border-t border-gray-100">
@@ -159,7 +153,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
                         </svg>
                     </div>
-                    <div id="networkContainer" class="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                    <div id="networkContainer" class="space-y-4 max-h-[350px] overflow-y-auto pr-1">
                         <p class="text-sm text-gray-500">Resolving connections...</p>
                     </div>
                 </div>
@@ -179,8 +173,8 @@
                                     <th>PID</th>
                                     <th>User</th>
                                     <th>Command</th>
-                                    <th class="w-32">CPU %</th>
-                                    <th class="w-24">Mem %</th>
+                                    <th class="hidden sm:table-cell">CPU %</th>
+                                    <th class="hidden sm:table-cell">Mem %</th>
                                 </tr>
                             </thead>
                             <tbody id="processContainer">
@@ -219,4 +213,5 @@
         </div>
     </div>
 </body>
+
 </html>
