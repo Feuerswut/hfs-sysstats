@@ -18,7 +18,7 @@
 }
 
 /* ─── Dark mode variable overrides ─────────────────────────────────────────── */
-html.theme-dark {
+body.theme-dark {
     --bg:        #0d1117;
     --card:      #161b22;
     --card-hover:#1c2128;
@@ -40,47 +40,47 @@ html, body {
 }
 
 /* ─── Tailwind overrides scoped to theme-dark on <html> ─────────────────────
-   We key off html.theme-dark so that every element inside the page responds,
+   We key off body.theme-dark so that every element inside the page responds,
    including cards, text, borders, and buttons.
    ───────────────────────────────────────────────────────────────────────────── */
 
-html.theme-dark body { background-color: var(--bg) !important; color: var(--t1); }
+body.theme-dark body { background-color: var(--bg) !important; color: var(--t1); }
 
-html.theme-dark .bg-white        { background-color: var(--card)    !important; }
-html.theme-dark .bg-gray-100     { background-color: var(--bar-bg)  !important; }
-html.theme-dark .bg-gray-50      { background-color: var(--bar-bg)  !important; }
-html.theme-dark .bg-gray-200     { background-color: var(--bar-bg)  !important; }
+body.theme-dark .bg-white        { background-color: var(--card)    !important; }
+body.theme-dark .bg-gray-100     { background-color: var(--bar-bg)  !important; }
+body.theme-dark .bg-gray-50      { background-color: var(--bar-bg)  !important; }
+body.theme-dark .bg-gray-200     { background-color: var(--bar-bg)  !important; }
 
-html.theme-dark .text-gray-900   { color: var(--t1) !important; }
-html.theme-dark .text-gray-800   { color: var(--t2) !important; }
-html.theme-dark .text-gray-700   { color: var(--t2) !important; }
-html.theme-dark .text-gray-600   { color: var(--t3) !important; }
-html.theme-dark .text-gray-500   { color: var(--t3) !important; }
-html.theme-dark .text-gray-400   { color: var(--t4) !important; }
+body.theme-dark .text-gray-900   { color: var(--t1) !important; }
+body.theme-dark .text-gray-800   { color: var(--t2) !important; }
+body.theme-dark .text-gray-700   { color: var(--t2) !important; }
+body.theme-dark .text-gray-600   { color: var(--t3) !important; }
+body.theme-dark .text-gray-500   { color: var(--t3) !important; }
+body.theme-dark .text-gray-400   { color: var(--t4) !important; }
 
-html.theme-dark .border-gray-200 { border-color: var(--border) !important; }
-html.theme-dark .border-gray-100 { border-color: var(--border) !important; }
-html.theme-dark .border-gray-300 { border-color: var(--border) !important; }
+body.theme-dark .border-gray-200 { border-color: var(--border) !important; }
+body.theme-dark .border-gray-100 { border-color: var(--border) !important; }
+body.theme-dark .border-gray-300 { border-color: var(--border) !important; }
 
-html.theme-dark .stat-card       { background-color: var(--card) !important; border-color: var(--border) !important; }
+body.theme-dark .stat-card       { background-color: var(--card) !important; border-color: var(--border) !important; }
 
-html.theme-dark button#themeToggle {
+body.theme-dark button#themeToggle {
     background-color: var(--card)   !important;
     border-color:     var(--border) !important;
     color:            var(--t1)     !important;
 }
-html.theme-dark button#themeToggle:hover {
+body.theme-dark button#themeToggle:hover {
     background-color: var(--card-hover) !important;
 }
 
 /* Status indicator pill */
-html.theme-dark .flex.items-center.h-8.bg-white {
+body.theme-dark .flex.items-center.h-8.bg-white {
     background-color: var(--card)   !important;
     border-color:     var(--border) !important;
 }
 
 /* Mobile chart placeholders */
-html.theme-dark .border-dashed {
+body.theme-dark .border-dashed {
     border-color: var(--border) !important;
 }
 
@@ -93,11 +93,12 @@ html.theme-dark .border-dashed {
 
 /* ─── Stat cards ────────────────────────────────────────────────────────────── */
 .stat-card {
-    background:    var(--card);
-    border:        1px solid var(--border);
-    box-shadow:    var(--shadow);
-    border-radius: var(--radius);
-    transition:    transform 0.2s ease, box-shadow 0.2s ease;
+    background:      var(--card);
+    border:          1px solid var(--border);
+    box-shadow:      var(--shadow);
+    border-radius:   var(--radius);
+    transition:      transform 0.2s ease, box-shadow 0.2s ease;
+    justify-content: flex-start;
 }
 .stat-card:hover {
     transform:  translateY(-2px);
@@ -230,8 +231,8 @@ html.theme-dark .border-dashed {
 .iface-badge.up   { background: #d1fae5; color: #065f46; }
 .iface-badge.down { background: #fee2e2; color: #991b1b; }
 
-html.theme-dark .iface-badge.up   { background: #064e3b; color: #6ee7b7; }
-html.theme-dark .iface-badge.down { background: #450a0a; color: #fca5a5; }
+body.theme-dark .iface-badge.up   { background: #064e3b; color: #6ee7b7; }
+body.theme-dark .iface-badge.down { background: #450a0a; color: #fca5a5; }
 
 /* Detail rows beneath the interface header */
 .iface-details {
@@ -286,6 +287,26 @@ html.theme-dark .iface-badge.down { background: #450a0a; color: #fca5a5; }
 }
 
 /* ─── Error alert dark mode ──────────────────────────────────────────────────── */
-html.theme-dark .bg-red-100  { background-color: #450a0a !important; }
-html.theme-dark .border-red-400 { border-color: #b91c1c !important; }
-html.theme-dark .text-red-700   { color: #fca5a5 !important; }
+body.theme-dark .bg-red-100  { background-color: #450a0a !important; }
+body.theme-dark .border-red-400 { border-color: #b91c1c !important; }
+body.theme-dark .text-red-700   { color: #fca5a5 !important; }
+
+/* ─── Fix the storage card ───────────────────────────────────────────────────── */
+@media (min-width: 1025px) and (max-width: 1280px) {
+    #diskContainer .disk-row-header {
+        flex-direction: column;
+        align-items:    stretch;
+        gap:            2px;
+    }
+    #diskContainer .disk-mount {
+        text-align:    left;
+        max-width:     100%;
+        width:         100%;
+        white-space:   nowrap;
+        overflow:      hidden;
+        text-overflow: ellipsis;
+    }
+    #diskContainer .disk-size {
+        text-align: right;
+    }
+}

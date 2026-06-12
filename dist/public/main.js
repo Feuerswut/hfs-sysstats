@@ -278,9 +278,9 @@ async function fetchStats() {
         if (data.disk && data.disk.filesystems) {
             diskBox.innerHTML = data.disk.filesystems.map(vol => `
                 <div class="mb-3 last:mb-0">
-                    <div class="flex justify-between text-xs mb-1 val">
-                        <span class="font-semibold text-gray-700 truncate max-w-[120px]">${vol.mount}</span>
-                        <span class="text-gray-400">${formatBytes(vol.used)} / ${formatBytes(vol.size)} (${vol.use}%)</span>
+                    <div class="disk-row-header flex justify-between text-xs mb-1 val">
+                        <span class="disk-mount font-semibold text-gray-700 truncate max-w-[120px]">${vol.mount}</span>
+                        <span class="disk-size text-gray-400">${formatBytes(vol.used)} / ${formatBytes(vol.size)} (${vol.use}%)</span>
                     </div>
                     <div class="progress-track">
                         <div class="progress-fill ${vol.use > 90 ? 'bg-red-500' : 'bg-purple-500'}" style="width: ${vol.use}%"></div>
