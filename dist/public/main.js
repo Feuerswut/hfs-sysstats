@@ -2,50 +2,180 @@ let cpuChart, memoryChart;
 let cpuData = [], memoryData = [], timeLabels = [];
 let maxDataPoints = 20;
 
-// Initialize charts[cite: 2]
+// Variables for 15-second data averaging window
+let lastWindowId = null;
+let bufferedCpuPoints = [];
+let bufferedMemPoints = [];
+
+// Performance variables for mobile optimizations
+let chartsActive = false;
+let isMobile = false;
+let lastSuccessTimestamp = Date.now();
+
+// Utility function to extract cookie values
+function getThemeCookie() {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; theme=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return 'auto';
+}
+
+// Utility function to save cookie values
+function setThemeCookie(value) {
+    const expiry = new Date();
+    expiry.setTime(expiry.getTime() + (365 * 24 * 60 * 60 * 1000));
+    document.cookie = `theme=${value};path=/;expires=${expiry.toUTCString()};SameSite=Strict`;
+}
+
+// Applies requested visual theme to DOM elements
+function applySelectedTheme(mode) {
+    const root = document.documentElement;
+    root.classList.remove('theme-dark', 'theme-light');
+    
+    let target = mode;
+    if (mode === 'auto') {
+        target = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    if (target === 'dark') {
+        root.classList.add('theme-dark');
+    } else {
+        root.classList.add('theme-light');
+    }
+    
+    document.getElementById('themeToggle').textContent = `Theme: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
+}
+
+// Cycle through theme options
+function toggleThemeMode() {
+    const current = getThemeCookie();
+    let next = 'auto';
+    if (current === 'auto') next = 'light';
+    else if (current === 'light') next = 'dark';
+    
+    setThemeCookie(next);
+    applySelectedTheme(next);
+}
+
+// Initialize structural layout constraints for Chart.js instances
 function initCharts() {
     const cpuCtx = document.getElementById('cpuChart').getContext('2d');
     const memoryCtx = document.getElementById('memoryChart').getContext('2d');
     
-    const chartConfig = {
+    const baseConfig = {
         type: 'line',
         options: {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { intersect: false, mode: 'index' },
-            scales: { y: { beginAtZero: true, max: 100 } },
-            elements: { point: { radius: 0 }, line: { borderWidth: 2 } },
-            animation: { duration: 0 } // Disabled for smoother live updates
+            scales: {
+                y: { beginAtZero: true, max: 100, ticks: { font: { size: 10 } } },
+                x: { ticks: { font: { size: 9 } } }
+            },
+            elements: { point: { radius: 1, hoverRadius: 4 }, line: { borderWidth: 2 } },
+            animation: { duration: 0 } 
         }
     };
     
     cpuChart = new Chart(cpuCtx, {
-        ...chartConfig,
+        ...baseConfig,
         data: {
             labels: timeLabels,
             datasets: [{
-                label: 'CPU Usage (%)',
+                label: 'CPU (15s Avg %)',
                 data: cpuData,
                 borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.4, fill: true
+                backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                tension: 0.3,
+                fill: true
             }]
         }
     });
     
     memoryChart = new Chart(memoryCtx, {
-        ...chartConfig,
+        ...baseConfig,
         data: {
             labels: timeLabels,
             datasets: [{
-                label: 'Memory Usage (%)',
+                label: 'Memory (15s Avg %)',
                 data: memoryData,
                 borderColor: '#22c55e',
-                backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                tension: 0.4, fill: true
+                backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                tension: 0.3,
+                fill: true
             }]
         }
     });
+}
+
+// Processes incoming parameters into a 15-second data bundle to trace averages
+function clearAndBundleFifteenSecondWindows(rawCpu, rawMem) {
+    const currentTimeMs = Date.now();
+    const currentWindowId = Math.floor(currentTimeMs / 15000); // 15,000ms sliding windows
+
+    if (lastWindowId === null) {
+        lastWindowId = currentWindowId;
+    }
+
+    if (currentWindowId !== lastWindowId) {
+        if (bufferedCpuPoints.length > 0) {
+            const calculatedCpuAvg = bufferedCpuPoints.reduce((a, b) => a + b, 0) / bufferedCpuPoints.length;
+            const calculatedMemAvg = bufferedMemPoints.reduce((a, b) => a + b, 0) / bufferedMemPoints.length;
+            const stampLabel = new Date(lastWindowId * 15000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            cpuData.push(parseFloat(calculatedCpuAvg.toFixed(1)));
+            memoryData.push(parseFloat(calculatedMemAvg.toFixed(1)));
+            timeLabels.push(stampLabel);
+
+            if (cpuData.length > maxDataPoints) {
+                cpuData.shift();
+                memoryData.shift();
+                timeLabels.shift();
+            }
+
+            if (chartsActive && cpuChart && memoryChart) {
+                cpuChart.update();
+                memoryChart.update();
+            }
+        }
+        lastWindowId = currentWindowId;
+        bufferedCpuPoints = [rawCpu];
+        bufferedMemPoints = [rawMem];
+    } else {
+        bufferedCpuPoints.push(rawCpu);
+        bufferedMemPoints.push(rawMem);
+    }
+}
+
+function checkDeviceCapabilitiesAndSetupPlaceholders() {
+    isMobile = window.innerWidth < 768;
+    const cpuCover = document.getElementById('cpuMobilePlaceholder');
+    const memCover = document.getElementById('memMobilePlaceholder');
+
+    if (isMobile && !chartsActive) {
+        cpuCover.classList.remove('hidden');
+        memCover.classList.remove('hidden');
+    } else {
+        cpuCover.classList.add('hidden');
+        memCover.classList.add('hidden');
+        if (!chartsActive) {
+            initCharts();
+            chartsActive = true;
+        }
+    }
+}
+
+function loadMobileChartsDefensively() {
+    document.getElementById('cpuMobilePlaceholder').classList.add('hidden');
+    document.getElementById('memMobilePlaceholder').classList.add('hidden');
+    if (!chartsActive) {
+        initCharts();
+        chartsActive = true;
+        if (cpuChart && memoryChart) {
+            cpuChart.update();
+            memoryChart.update();
+        }
+    }
 }
 
 function formatBytes(bytes) {
@@ -61,28 +191,31 @@ function formatUptime(seconds) {
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    let str = '';
-    if (days > 0) str += `${days}d `;
-    if (hours > 0) str += `${hours}h `;
-    str += `${minutes}m`;
-    return str;
+    return days > 0 ? `${days}d ${hours}h ${minutes}m` : `${hours}h ${minutes}m`;
 }
 
-function updateCharts(cpuUsage, memUsage) {
-    const now = new Date().toLocaleTimeString();
-    
-    cpuData.push(cpuUsage);
-    memoryData.push(memUsage);
-    timeLabels.push(now);
-    
-    if (cpuData.length > maxDataPoints) {
-        cpuData.shift();
-        memoryData.shift();
-        timeLabels.shift();
-    }
-    
-    cpuChart.update();
-    memoryChart.update();
+// Heartbeat routine computing precise delay increments and color-coding tags
+function kickstartUpdateTimer() {
+    setInterval(() => {
+        const secondsElapsed = Math.floor((Date.now() - lastSuccessTimestamp) / 1000);
+        
+        const dotElement = document.getElementById('statusDot');
+        const textElement = document.getElementById('statusText');
+        const stampElement = document.getElementById('lastUpdate');
+
+        stampElement.textContent = `updated ${secondsElapsed}s ago`;
+
+        if (secondsElapsed < 15) {
+            dotElement.className = "pulse-dot w-3 h-3 bg-green-500 rounded-full mr-2";
+            textElement.textContent = "Live";
+        } else if (secondsElapsed >= 15 && secondsElapsed < 60) {
+            dotElement.className = "w-3 h-3 bg-yellow-500 rounded-full mr-2";
+            textElement.textContent = "Waiting";
+        } else {
+            dotElement.className = "w-3 h-3 bg-gray-400 rounded-full mr-2";
+            textElement.textContent = "Offline";
+        }
+    }, 1000);
 }
 
 async function fetchStats() {
@@ -92,162 +225,150 @@ async function fetchStats() {
         
         const data = await res.json();
         document.getElementById('errorAlert').classList.add('hidden');
+        lastSuccessTimestamp = Date.now();
         
-        // Config Setup
         if (data.config && data.config.maxDataPoints) {
             maxDataPoints = data.config.maxDataPoints;
         }
 
-        // --- 1. System Info ---
+        // Host Name / Title Assignment
         if (data.system) {
-            document.getElementById('systemFqdn').textContent = `Host: ${data.system.fqdn || data.system.hostname}`;
+            document.getElementById('systemFqdn').textContent = data.system.fqdn || data.system.hostname;
             document.getElementById('systemPlatform').textContent = `${data.system.distro} ${data.system.release} (${data.system.arch})`;
             document.getElementById('systemKernel').textContent = `Kernel: ${data.system.kernel}`;
-            
-            if (data.system.hardware && data.system.hardware.model) {
+            if (data.system.hardware) {
                 document.getElementById('systemHardware').textContent = `Hardware: ${data.system.hardware.manufacturer} ${data.system.hardware.model}`;
             }
             document.getElementById('systemUptime').textContent = `Uptime: ${formatUptime(data.system.uptime)}`;
         }
 
-        // --- 2. CPU ---
+        // Processing Unit Execution Metrics
         if (data.cpu) {
-            const cpuUsage = data.cpu.load.toFixed(1);
-            document.getElementById('cpuUsage').textContent = `${cpuUsage}%`;
+            const currentCpuLoad = data.cpu.load;
+            document.getElementById('cpuUsage').textContent = `${currentCpuLoad.toFixed(1)}%`;
             document.getElementById('cpuDetails').textContent = `User: ${data.cpu.loadUser.toFixed(1)}% • Sys: ${data.cpu.loadSystem.toFixed(1)}%`;
-            document.getElementById('cpuBar').style.width = `${cpuUsage}%`;
+            document.getElementById('cpuBar').style.width = `${currentCpuLoad}%`;
             
-            // Build per-core grid
-            if (data.cpu.cores && data.cpu.cores.length > 0) {
+            if (data.cpu.cores) {
                 document.getElementById('cpuCores').innerHTML = data.cpu.cores.map((load, i) => `
                     <div class="core-item">
-                        Core ${i}
+                        C${i}
                         <div class="core-bar"><div class="core-bar-fill" style="width: ${load}%"></div></div>
                     </div>
                 `).join('');
             }
             
-            // Temperature
             if (data.cpu.temperature && data.cpu.temperature.main !== null) {
-                const temp = data.cpu.temperature.main.toFixed(1);
-                document.getElementById('tempValue').textContent = `${temp}°C`;
-                const status = temp < 60 ? 'Normal' : temp < 80 ? 'Warm' : 'Hot';
-                const color = temp < 60 ? 'text-green-600' : temp < 80 ? 'text-yellow-600' : 'text-red-600';
-                document.getElementById('tempStatus').textContent = status;
-                document.getElementById('tempStatus').className = `text-sm mt-1 font-medium ${color}`;
-            } else {
-                document.getElementById('tempValue').textContent = 'N/A';
-                document.getElementById('tempStatus').textContent = 'Sensor unavailable';
-                document.getElementById('tempStatus').className = 'text-sm mt-1 font-medium text-gray-500';
+                const degrees = data.cpu.temperature.main;
+                document.getElementById('tempValue').textContent = `${degrees.toFixed(1)}°C`;
+                const state = degrees < 60 ? 'Normal' : degrees < 80 ? 'Warm' : 'Hot';
+                const classColor = degrees < 60 ? 'text-green-600' : degrees < 80 ? 'text-yellow-600' : 'text-red-600';
+                document.getElementById('tempStatus').textContent = state;
+                document.getElementById('tempStatus').className = `text-sm mt-1 font-medium ${classColor}`;
+            }
+            
+            // Background array computation regardless of layout dimensions
+            if (data.memory) {
+                clearAndBundleFifteenSecondWindows(currentCpuLoad, data.memory.usage);
             }
         }
 
-        // --- 3. Memory ---
+        // Virtual and Physical Memory Spaces
         if (data.memory) {
-            const memUsage = data.memory.usage.toFixed(1);
-            document.getElementById('memUsage').textContent = `${memUsage}%`;
+            const activeMemUsage = data.memory.usage.toFixed(1);
+            document.getElementById('memUsage').textContent = `${activeMemUsage}%`;
             document.getElementById('memDetails').textContent = `${formatBytes(data.memory.active)} / ${formatBytes(data.memory.total)}`;
-            document.getElementById('memBar').style.width = `${memUsage}%`;
+            document.getElementById('memBar').style.width = `${activeMemUsage}%`;
             
-            const swapPerc = data.memory.swaptotal ? ((data.memory.swapused / data.memory.swaptotal) * 100).toFixed(1) : 0;
+            const totalSwap = data.memory.swaptotal || 0;
+            const activeSwap = data.memory.swapused || 0;
+            const swapPercentage = totalSwap ? ((activeSwap / totalSwap) * 100).toFixed(1) : 0;
             document.getElementById('swapDetails').innerHTML = `
-                <span>Swap: ${formatBytes(data.memory.swapused)} / ${formatBytes(data.memory.swaptotal)}</span>
-                <span>${swapPerc}%</span>
+                <span>Swap: ${formatBytes(activeSwap)} / ${formatBytes(totalSwap)}</span>
+                <span>${swapPercentage}%</span>
             `;
         }
-        
-        // --- 4. Disks ---
-        const diskCont = document.getElementById('diskContainer');
-        if (data.disk && data.disk.filesystems && data.disk.filesystems.length > 0) {
-            diskCont.innerHTML = data.disk.filesystems.map(fs => {
-                const isCritical = fs.use > 90 ? 'bg-red-500' : 'bg-purple-500';
-                return `
-                    <div class="mb-3 last:mb-0">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="font-semibold text-gray-700 truncate pr-2 val">${fs.mount}</span>
-                            <span class="text-gray-500 whitespace-nowrap">${formatBytes(fs.used)} / ${formatBytes(fs.size)} (${fs.use}%)</span>
-                        </div>
-                        <div class="progress-track">
-                            <div class="progress-fill ${isCritical}" style="width: ${fs.use}%"></div>
-                        </div>
+
+        // Active Hard Drives Partition Map
+        const diskBox = document.getElementById('diskContainer');
+        if (data.disk && data.disk.filesystems) {
+            diskBox.innerHTML = data.disk.filesystems.map(vol => `
+                <div class="mb-3 last:mb-0">
+                    <div class="flex justify-between text-xs mb-1 val">
+                        <span class="font-semibold text-gray-700 truncate max-w-[120px]">${vol.mount}</span>
+                        <span class="text-gray-400">${formatBytes(vol.used)} / ${formatBytes(vol.size)} (${vol.use}%)</span>
                     </div>
-                `;
-            }).join('');
-        } else {
-            diskCont.innerHTML = '<p class="text-sm text-gray-500">No storage data available</p>';
+                    <div class="progress-track">
+                        <div class="progress-fill ${vol.use > 90 ? 'bg-red-500' : 'bg-purple-500'}" style="width: ${vol.use}%"></div>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // --- 5. Network ---
-        const netCont = document.getElementById('networkContainer');
+        // Connected Network Interfaces Traffic Speed 
+        const netBox = document.getElementById('networkContainer');
         if (data.network && data.network.interfaces && data.network.stats) {
-            const statsMap = {};
-            data.network.stats.forEach(s => statsMap[s.iface] = s);
+            const traceStats = {};
+            data.network.stats.forEach(s => traceStats[s.iface] = s);
 
-            netCont.innerHTML = data.network.interfaces.map(iface => {
-                const st = statsMap[iface.iface];
-                if (!st) return '';
-                const upClass = iface.operstate === 'up' ? 'up' : 'down';
-                
+            netBox.innerHTML = data.network.interfaces.map(card => {
+                const dataMetric = traceStats[card.iface];
+                if (!dataMetric) return '';
                 return `
-                    <div class="iface-row">
+                    <div class="iface-row text-xs">
                         <div class="flex justify-between items-center mb-1">
                             <div>
-                                <span class="iface-name mr-2">${iface.iface}</span>
-                                <span class="iface-badge ${upClass}">${iface.operstate}</span>
+                                <span class="iface-name mr-1">${card.iface}</span>
+                                <span class="iface-badge ${card.operstate === 'up' ? 'up' : 'down'}">${card.operstate}</span>
                             </div>
-                            <div class="text-xs text-gray-500 text-right val">
-                                <div><span class="text-green-500">▼</span> ${formatBytes(st.rx_sec)}/s</div>
-                                <div><span class="text-blue-500">▲</span> ${formatBytes(st.tx_sec)}/s</div>
+                            <div class="text-[11px] text-gray-500 font-mono text-right">
+                                <div>Down: ${formatBytes(dataMetric.rx_sec)}/s</div>
+                                <div>Up: ${formatBytes(dataMetric.tx_sec)}/s</div>
                             </div>
-                        </div>
-                        <div class="text-[11px] text-gray-400 flex justify-between val">
-                            <span>IPv4: ${iface.ip4 || 'N/A'}</span>
-                            <span>Tot: ${formatBytes(st.rx_bytes + st.tx_bytes)}</span>
                         </div>
                     </div>
                 `;
             }).join('');
-            if (netCont.innerHTML === '') netCont.innerHTML = '<p class="text-sm text-gray-500">No active network interfaces</p>';
         }
 
-        // --- 6. Processes ---
-        const procBody = document.getElementById('processContainer');
+        // Top CPU Consuming Task Table Rows
+        const procBox = document.getElementById('processContainer');
         if (data.processes && data.processes.top) {
-            document.getElementById('procSummary').textContent = `Total: ${data.processes.all} | Running: ${data.processes.running}`;
-            
-            procBody.innerHTML = data.processes.top.map(p => `
-                <tr>
-                    <td class="val">${p.pid}</td>
-                    <td>${p.user}</td>
-                    <td title="${p.command}" class="font-semibold text-gray-700">${p.name}</td>
+            document.getElementById('procSummary').textContent = `All: ${data.processes.all} | Active: ${data.processes.running}`;
+            procBox.innerHTML = data.processes.top.map(p => `
+                <tr class="border-b border-gray-100">
+                    <td class="val text-gray-400">${p.pid}</td>
+                    <td class="truncate max-w-[70px]">${p.user}</td>
+                    <td class="font-semibold text-gray-700 truncate max-w-[150px]" title="${p.command}">${p.name}</td>
                     <td class="val">
                         ${p.cpu.toFixed(1)}%
-                        <div class="cpu-bar-inline" style="width: ${Math.min(p.cpu, 100)}%"></div>
+                        <div class="cpu-bar-inline hidden sm:inline-block" style="width: ${Math.min(p.cpu, 60)}px"></div>
                     </td>
                     <td class="val">${p.mem.toFixed(1)}%</td>
                 </tr>
             `).join('');
         }
 
-        // Update charts and timestamp
-        if (data.cpu && data.memory) {
-            updateCharts(data.cpu.load, data.memory.usage);
-        }
-        document.getElementById('lastUpdate').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
-        
     } catch (err) {
-        console.error('Failed to fetch stats:', err);
+        console.error('Data retrieval breakdown:', err);
         document.getElementById('errorAlert').classList.remove('hidden');
         document.getElementById('errorMessage').textContent = err.message;
     }
 }
 
-// Initialization and automated polling
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("System Dashboard initialized");
-    initCharts();
-    fetchStats();
+// Master Execution Thread
+document.addEventListener('DOMContentLoaded', () => {
+    applySelectedTheme(getThemeCookie());
+    document.getElementById('themeToggle').addEventListener('click', toggleThemeMode);
     
-    // Poll based on config or default to 3 seconds[cite: 4]
-    setInterval(fetchStats, 3000); 
+    // Check mobile dimension configurations before loading heavy modules
+    checkDeviceCapabilitiesAndSetupPlaceholders();
+    window.addEventListener('resize', checkDeviceCapabilitiesAndSetupPlaceholders);
+    
+    document.getElementById('cpuMobilePlaceholder').addEventListener('click', loadMobileChartsDefensively);
+    document.getElementById('memMobilePlaceholder').addEventListener('click', loadMobileChartsDefensively);
+    
+    fetchStats();
+    kickstartUpdateTimer();
+    setInterval(fetchStats, 3000);
 });
