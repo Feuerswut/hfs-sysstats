@@ -1,10 +1,11 @@
 // Plugin metadata for HFS v3
-exports.version     = 3.2;
+exports.version     = 3.3;
 exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
 exports.author = "feuerswut";
 exports.repo   = "feuerswut/hfs-sysstats";
+exports.depend = [{ repo: "feuerswut/hfs-shared" }];
 
 exports.config = {
     allowPublicAccess: {
@@ -44,7 +45,7 @@ exports.config = {
 };
 
 exports.changelog = [
-    { version: 3.2, message: "Fix canonical URL redirect; add missing dist/package.json; fix card scrollbar." },
+    { version: 3.3, message: "Serving/auth now via hfs-shared's servePublic." },
 ];
 
 const fs = require('fs');
@@ -52,15 +53,21 @@ const fs = require('fs');
 const si = require('./systeminformation');
 const { schedulePing }        = require('./usage-ping');
 const { initConfig }          = require('./config-manager');
-const { handleStaticRequest, serveCanonicalRoot } = require('./serve');
+const { handleStaticRequest } = require('./serve');
 const { handleApiRequest }    = require('./api');
-const { redirectAlias }       = require('./backend/path-alias');
 
 exports.init = async api => {
-    const auth               = api.require('./auth');
-    const getCurrentUsername = auth.getCurrentUsername;
+    const shared = api.customApiCall('hfsShared')[0];
+    shared.requireVersion('^1.0.0');
 
-    const canonicalPath = `/~/plugins/${api.id}`;
+    const canonicalPath = shared.canonicalPath(api).slice(0, -1);
+
+    function authOpts() {
+        return {
+            publicAccess: api.getConfig('allowPublicAccess'),
+            hideFromUnauthorized: api.getConfig('hideFromUnauthorized'),
+        };
+    }
 
     // Start optional daily telemetry ping
     schedulePing(api, si, exports.version);
@@ -72,37 +79,22 @@ exports.init = async api => {
     return { middleware };
 
     async function middleware(ctx) {
-        // ── Legacy-URL redirect ─────────────────────────────────────────────────
-        if (redirectAlias(ctx, api, canonicalPath)) return;
+        // Legacy alias, dashboard-URL normalization, auth, and serving the
+        // bundled/custom-frontend index.html at the canonical root are all
+        // handled here -- see hfs-shared's servePublic.
+        if (shared.servePublic(ctx, api, {
+            ...authOpts(),
+            pathAlias: api.getConfig('pathAlias'),
+            useCustomFrontend: api.getConfig('useCustomFrontend'),
+            distDir: __dirname,
+        })) return;
 
         // Only handle our namespace
         const { path } = ctx;
         if (path !== canonicalPath && !path.startsWith(canonicalPath + '/')) return;
 
-        // A bare canonical path (no trailing slash) or an explicit
-        // /index.html must both redirect to the one canonical, trailing-slash
-        // URL - never serve content at either, so the dashboard's relative
-        // asset URLs (main.js, styles.css, ...) resolve against the right
-        // base and the page only ever "lives" at one URL.
-        if (path === canonicalPath || path === canonicalPath + '/index.html') {
-            ctx.status = 307;
-            ctx.set('Location', canonicalPath + '/' + (ctx.querystring ? '?' + ctx.querystring : ''));
-            ctx.body = '';
-            ctx.stop();
-            return;
-        }
-
-        // ── Auth gate ────────────────────────────────────────────────────────
-        const username = getCurrentUsername(ctx);
-        if (!username) {
-            if (!api.getConfig('allowPublicAccess')) {
-                if (api.getConfig('hideFromUnauthorized')) return; // pretend we don't exist
-                ctx.status = 403;
-                ctx.body   = '';
-                ctx.stop();
-                return;
-            }
-        }
+        // ── Auth for everything else in this namespace (the API) ──────────
+        if (shared.auth.gate(ctx, api, authOpts())) return;
 
         // ── Route dispatch ───────────────────────────────────────────────────
         const sub = path.slice(canonicalPath.length); // starts with '/'
@@ -133,17 +125,10 @@ exports.init = async api => {
             return;
         }
 
-        // The canonical trailing-slash root: HFS's own automatic serving
-        // 405s on this exact path (no literal file is named ''), so it's
-        // served explicitly instead of falling through to core.
-        if (path === canonicalPath + '/') {
-            serveCanonicalRoot(ctx, api);
-            return;
-        }
-
-        // Any other static asset: only intervene for the custom-frontend
-        // override; the bundled dist/public/ files are otherwise served
-        // automatically by HFS core once the request falls through here.
+        // Any other static asset (the dashboard root itself was already
+        // handled by servePublic above): only intervene for the
+        // custom-frontend override; the bundled dist/public/ files are
+        // otherwise served automatically by HFS core.
         handleStaticRequest(ctx, api, canonicalPath);
     }
 };
