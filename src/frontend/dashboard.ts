@@ -238,9 +238,9 @@ async function fetchStats(): Promise<void> {
                 const coresEl = el('cpuCores')
                 if (coresEl) {
                     coresEl.innerHTML = data.cpu.cores.map((load, i) => `
-                        <div class="core-item">
+                        <div class="core-item flex flex-col gap-1">
                             Core ${i}
-                            <div class="core-bar"><div class="core-bar__fill" style="width: ${load}%"></div></div>
+                            <div class="core-bar rounded-lg"><div class="core-bar__fill" style="width: ${load}%"></div></div>
                         </div>
                     `).join('')
                 }
@@ -286,12 +286,12 @@ async function fetchStats(): Promise<void> {
         const diskBox = el('diskContainer')
         if (diskBox && data.disk?.filesystems) {
             diskBox.innerHTML = data.disk.filesystems.map(vol => `
-                <div class="disk-row">
-                    <div class="disk-row-header">
+                <div class="disk-row flex flex-col gap-1">
+                    <div class="disk-row-header flex items-center justify-between">
                         <span class="disk-mount">${vol.mount}</span>
                         <span class="disk-size">${formatBytes(vol.used)} / ${formatBytes(vol.size)} (${vol.use}%)</span>
                     </div>
-                    <div class="progress-track progress-track--tight">
+                    <div class="progress-track progress-track--tight rounded-lg">
                         <div class="progress-fill ${vol.use > 90 ? 'progress-fill--red' : 'progress-fill--purple'}" style="width: ${vol.use}%"></div>
                     </div>
                 </div>
@@ -317,8 +317,8 @@ async function fetchStats(): Promise<void> {
                 const txTotal = dataMetric.tx_bytes != null ? formatBytes(dataMetric.tx_bytes) : null
 
                 return `
-                    <div class="iface-row">
-                        <div class="iface-row__top">
+                    <div class="iface-row flex flex-col gap-2 rounded-lg p-2">
+                        <div class="iface-row__top flex items-center justify-between">
                             <div>
                                 <span class="iface-name">${card.iface}</span>
                                 <span class="iface-badge ${card.operstate === 'up' ? 'up' : 'down'}">${card.operstate}</span>
@@ -328,7 +328,7 @@ async function fetchStats(): Promise<void> {
                                 <div>↑ ${formatBytes(dataMetric.tx_sec)}/s</div>
                             </div>
                         </div>
-                        <div class="iface-details">
+                        <div class="iface-details grid grid-cols-2 gap-1">
                             ${ipv4 ? `<div><span class="iface-label">IPv4</span><span class="iface-value">${ipv4}</span></div>` : ''}
                             ${ipv6 ? `<div><span class="iface-label">IPv6</span><span class="iface-value iface-value--ip6">${ipv6}</span></div>` : ''}
                             ${mac ? `<div><span class="iface-label">MAC</span><span class="iface-value">${mac}</span></div>` : ''}
@@ -351,13 +351,13 @@ async function fetchStats(): Promise<void> {
                     <td class="cmd-col" title="${p.command}">${p.name}</td>
                     <td class="val cpu-val-col">${p.cpu.toFixed(1)}%</td>
                     <td class="bar-col desktop-only">
-                        <div class="proc-bar-track">
+                        <div class="proc-bar-track rounded-lg">
                             <div class="proc-bar-fill proc-bar-fill--blue" style="width: ${Math.min(p.cpu, 100)}%"></div>
                         </div>
                     </td>
                     <td class="val mem-val-col">${p.mem.toFixed(1)}%</td>
                     <td class="bar-col desktop-only">
-                        <div class="proc-bar-track">
+                        <div class="proc-bar-track rounded-lg">
                             <div class="proc-bar-fill proc-bar-fill--green" style="width: ${Math.min(p.mem, 100)}%"></div>
                         </div>
                     </td>

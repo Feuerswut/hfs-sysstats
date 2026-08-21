@@ -33,7 +33,7 @@
         </div>
 
         <!-- Error Alert -->
-        <div id="errorAlert" class="alert alert--error is-hidden">
+        <div id="errorAlert" class="alert alert--error is-hidden flex items-start gap-3 rounded-lg p-4">
             <svg class="icon icon--sm alert__icon" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
             </svg>
@@ -44,12 +44,12 @@
         </div>
 
         <!-- Top Cards -->
-        <div class="stat-grid section">
+        <div class="stat-grid section grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
             <!-- CPU -->
-            <div class="card card--column">
+            <div class="card card--column rounded-lg p-4 flex flex-col gap-2">
                 <div>
-                    <div class="card__header">
+                    <div class="card__header flex items-center justify-between">
                         <h3 class="card__title">CPU Usage</h3>
                         <svg class="icon icon--blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -58,16 +58,16 @@
                     </div>
                     <p class="metric-value metric-value--blue" id="cpuUsage">--.--%</p>
                     <p class="metric-detail" id="cpuDetails">Loading...</p>
-                    <div class="progress-track">
+                    <div class="progress-track rounded-lg">
                         <div class="progress-fill progress-fill--blue" id="cpuBar" style="width: 0%"></div>
                     </div>
                 </div>
-                <div id="cpuCores" class="cores-grid"></div>
+                <div id="cpuCores" class="cores-grid grid grid-cols-4 gap-2"></div>
             </div>
 
             <!-- Memory -->
-            <div class="card">
-                <div class="card__header">
+            <div class="card rounded-lg p-4 flex flex-col gap-2">
+                <div class="card__header flex items-center justify-between">
                     <h3 class="card__title">Memory</h3>
                     <svg class="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -76,7 +76,7 @@
                 </div>
                 <p class="metric-value metric-value--green" id="memUsage">--.--%</p>
                 <p class="metric-detail" id="memDetails">Loading...</p>
-                <div class="progress-track">
+                <div class="progress-track rounded-lg">
                     <div class="progress-fill progress-fill--green" id="memBar" style="width: 0%"></div>
                 </div>
                 <div class="swap-row" id="swapDetails">
@@ -85,8 +85,8 @@
             </div>
 
             <!-- Temperature -->
-            <div class="card card--column">
-                <div class="card__header">
+            <div class="card card--column rounded-lg p-4 flex flex-col gap-2">
+                <div class="card__header flex items-center justify-between">
                     <h3 class="card__title">Temperature</h3>
                     <svg class="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -98,9 +98,9 @@
             </div>
 
             <!-- System Info -->
-            <div class="card card--column">
+            <div class="card card--column rounded-lg p-4 flex flex-col gap-2">
                 <div>
-                    <div class="card__header">
+                    <div class="card__header flex items-center justify-between">
                         <h3 class="card__title">System Info</h3>
                         <svg class="icon icon--gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -116,35 +116,35 @@
         </div>
 
         <!-- Infrastructure Layout -->
-        <div class="infra-grid section">
+        <div class="infra-grid section grid grid-cols-1 lg:grid-cols-3 gap-4">
 
             <!-- Left column: Storage + Network -->
-            <div class="infra-grid__side">
+            <div class="infra-grid__side flex flex-col gap-4">
 
                 <!-- Storage Volumes -->
-                <div class="card">
-                    <div class="card__header">
+                <div class="card rounded-lg p-4">
+                    <div class="card__header flex items-center justify-between">
                         <h3 class="card__title">Storage Volumes</h3>
                         <svg class="icon icon--sm icon--purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
                         </svg>
                     </div>
-                    <div id="diskContainer" class="scroll-list scroll-list--tall">
+                    <div id="diskContainer" class="scroll-list scroll-list--tall flex flex-col gap-2">
                         <p class="placeholder-text">Retrieving volumes...</p>
                     </div>
                 </div>
 
                 <!-- Network Interfaces -->
-                <div class="card">
-                    <div class="card__header">
+                <div class="card rounded-lg p-4">
+                    <div class="card__header flex items-center justify-between">
                         <h3 class="card__title">Network Interfaces</h3>
                         <svg class="icon icon--sm icon--indigo" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
                         </svg>
                     </div>
-                    <div id="networkContainer" class="scroll-list">
+                    <div id="networkContainer" class="scroll-list flex flex-col gap-2">
                         <p class="placeholder-text">Resolving connections...</p>
                     </div>
                 </div>
@@ -152,8 +152,8 @@
 
             <!-- Top Processes -->
             <div class="infra-grid__main">
-                <div class="card card--fill card--column">
-                    <div class="card__header">
+                <div class="card card--fill card--column rounded-lg p-4">
+                    <div class="card__header flex items-center justify-between">
                         <h3 class="card__title">Top Processes</h3>
                         <span class="proc-summary" id="procSummary">Reading...</span>
                     </div>
@@ -182,10 +182,10 @@
         </div>
 
         <!-- Historical Charts -->
-        <div class="chart-grid">
+        <div class="chart-grid grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             <!-- CPU Chart -->
-            <div class="card card--column">
+            <div class="card card--column rounded-lg p-4">
                 <h3 class="card__title">CPU History (15s Avg)</h3>
                 <div class="chart-container">
                     <div id="cpuMobilePlaceholder" class="chart-placeholder">
@@ -200,7 +200,7 @@
             </div>
 
             <!-- Memory Chart -->
-            <div class="card card--column">
+            <div class="card card--column rounded-lg p-4">
                 <h3 class="card__title">Memory History (15s Avg)</h3>
                 <div class="chart-container">
                     <div id="memMobilePlaceholder" class="chart-placeholder">

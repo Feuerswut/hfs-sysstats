@@ -6,6 +6,7 @@
 
 import { applyStoredOrSystemTheme, getThemeStorage, toggleThemeMode, updateThemeButtonLabel, watchStorageTheme, watchSystemTheme } from './theme'
 import { initDashboard } from './dashboard'
+import { loadOptionalTailwind } from './tailwind-loader'
 
 document.addEventListener('DOMContentLoaded', () => {
     applyStoredOrSystemTheme()
@@ -16,4 +17,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('themeToggle')?.addEventListener('click', toggleThemeMode)
 
     initDashboard()
+    loadOptionalTailwind()
 })

@@ -1,5 +1,5 @@
 // Plugin metadata for HFS v3
-exports.version     = 3.0;
+exports.version     = 3.1;
 exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
@@ -44,11 +44,14 @@ exports.config = {
 };
 
 exports.changelog = [
+    { version: 3.1, message: "Re-added Tailwind utility classes to the dashboard's body content (stats cards, charts, tables) as an optional runtime-loaded enhancement -- a soft /api/tailwind.js passthrough to a Tailwind browser-runtime provider, not the old vendored CSS file or hard dependency. The header stays pure hand-written Sass, untouched. The page remains fully styled and usable via its own Sass alone whenever the runtime script isn't available." },
     { version: 3.0, message: "Canonical URL is now /~/plugins/<id> (was hardcoded to /~/stats). Added a pathAlias redirect for the old URL, a custom-frontend override, and rebuilt the dashboard as TypeScript + Sass, dropping the vendored unpurged Tailwind build and the hfs-tailwind dependency." },
     { version: 2.0, message: "Full systeminformation integration. Separate serve.js/api.js/config-manager.js. storage/config.json with hardware detection. Dark mode support." },
     { version: 1.8, message: "Added optional daily usage ping (basic / detailed / off)." },
     { version: 1.7, message: "Separate Modern Tailwind distribution into another plugin. Please install before updating." },
 ];
+
+const fs = require('fs');
 
 const si = require('./systeminformation');
 const { schedulePing }        = require('./usage-ping');
@@ -107,6 +110,28 @@ exports.init = async api => {
         const sub = path.slice(canonicalPath.length); // starts with '/'
         if (sub === '/api') {
             await handleApiRequest(ctx, si);
+            return;
+        }
+
+        // ── GET /api/tailwind.js ─────────────────────────────────────────────
+        // Optional runtime enhancement: the dashboard body content carries
+        // Tailwind utility classes alongside its own Sass, and loads this
+        // script client-side to activate them. Purely a soft lookup -- no
+        // exports.depend on the plugin providing it, so the page stays fully
+        // usable via its bundled Sass alone when it isn't installed.
+        if (sub === '/api/tailwind.js') {
+            const tailwind = api.customApiCall('tailwind');
+            if (!tailwind || !tailwind[0]) {
+                ctx.status = 404;
+                ctx.type   = 'application/json';
+                ctx.body   = JSON.stringify({ error: 'Tailwind is not available' });
+                ctx.stop();
+                return;
+            }
+            ctx.type = 'application/javascript';
+            ctx.set('Cache-Control', 'public, max-age=86400');
+            ctx.body = fs.createReadStream(tailwind[0].path);
+            ctx.stop();
             return;
         }
 
