@@ -1,5 +1,5 @@
 // Plugin metadata for HFS v3
-exports.version     = 3.1;
+exports.version     = 3.2;
 exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
@@ -44,11 +44,7 @@ exports.config = {
 };
 
 exports.changelog = [
-    { version: 3.1, message: "Re-added Tailwind utility classes to the dashboard's body content (stats cards, charts, tables) as an optional runtime-loaded enhancement -- a soft /api/tailwind.js passthrough to a Tailwind browser-runtime provider, not the old vendored CSS file or hard dependency. The header stays pure hand-written Sass, untouched. The page remains fully styled and usable via its own Sass alone whenever the runtime script isn't available." },
-    { version: 3.0, message: "Canonical URL is now /~/plugins/<id> (was hardcoded to /~/stats). Added a pathAlias redirect for the old URL, a custom-frontend override, and rebuilt the dashboard as TypeScript + Sass, dropping the vendored unpurged Tailwind build and the hfs-tailwind dependency." },
-    { version: 2.0, message: "Full systeminformation integration. Separate serve.js/api.js/config-manager.js. storage/config.json with hardware detection. Dark mode support." },
-    { version: 1.8, message: "Added optional daily usage ping (basic / detailed / off)." },
-    { version: 1.7, message: "Separate Modern Tailwind distribution into another plugin. Please install before updating." },
+    { version: 3.2, message: "Fix canonical URL redirect; add missing dist/package.json; fix card scrollbar." },
 ];
 
 const fs = require('fs');
