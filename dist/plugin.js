@@ -56,7 +56,7 @@ const fs = require('fs');
 const si = require('./systeminformation');
 const { schedulePing }        = require('./usage-ping');
 const { initConfig }          = require('./config-manager');
-const { handleStaticRequest } = require('./serve');
+const { handleStaticRequest, serveCanonicalRoot } = require('./serve');
 const { handleApiRequest }    = require('./api');
 const { redirectAlias }       = require('./backend/path-alias');
 
@@ -83,10 +83,12 @@ exports.init = async api => {
         const { path } = ctx;
         if (path !== canonicalPath && !path.startsWith(canonicalPath + '/')) return;
 
-        // A bare canonical path (no trailing slash) must redirect to one with a
-        // trailing slash, otherwise the dashboard's relative asset URLs
-        // (main.js, styles.css, ...) resolve against the wrong base.
-        if (path === canonicalPath) {
+        // A bare canonical path (no trailing slash) or an explicit
+        // /index.html must both redirect to the one canonical, trailing-slash
+        // URL - never serve content at either, so the dashboard's relative
+        // asset URLs (main.js, styles.css, ...) resolve against the right
+        // base and the page only ever "lives" at one URL.
+        if (path === canonicalPath || path === canonicalPath + '/index.html') {
             ctx.status = 307;
             ctx.set('Location', canonicalPath + '/' + (ctx.querystring ? '?' + ctx.querystring : ''));
             ctx.body = '';
@@ -135,9 +137,17 @@ exports.init = async api => {
             return;
         }
 
-        // Static assets: only intervene for the custom-frontend override; the
-        // bundled dist/public/ files are otherwise served automatically by HFS
-        // core once the request falls through here.
+        // The canonical trailing-slash root: HFS's own automatic serving
+        // 405s on this exact path (no literal file is named ''), so it's
+        // served explicitly instead of falling through to core.
+        if (path === canonicalPath + '/') {
+            serveCanonicalRoot(ctx, api);
+            return;
+        }
+
+        // Any other static asset: only intervene for the custom-frontend
+        // override; the bundled dist/public/ files are otherwise served
+        // automatically by HFS core once the request falls through here.
         handleStaticRequest(ctx, api, canonicalPath);
     }
 };

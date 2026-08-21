@@ -79,4 +79,30 @@ function handleStaticRequest(ctx, api, canonicalPath) {
     }
 }
 
-module.exports = { handleStaticRequest };
+/**
+ * Serves the dashboard's actual HTML at the canonical trailing-slash root.
+ * HFS's own automatic serving 405s on this exact path (no literal file is
+ * named ''), so the bundled dist/public/index.html — or a custom-frontend
+ * override, if enabled — is served explicitly instead of falling through.
+ */
+function serveCanonicalRoot(ctx, api) {
+    if (api.getConfig('useCustomFrontend')) {
+        const customFile = path.join(api.storageDir, 'custom-frontend', 'index.html');
+        try {
+            if (fs.existsSync(customFile) && fs.statSync(customFile).isFile()) {
+                serveFile(ctx, customFile);
+                return;
+            }
+        } catch {} // fall through to the bundled file
+    }
+    try {
+        serveFile(ctx, path.join(__dirname, 'public', 'index.html'));
+    } catch (err) {
+        ctx.status = 500;
+        ctx.type   = 'text/plain';
+        ctx.body   = 'Error serving dashboard: ' + err.message;
+        ctx.stop();
+    }
+}
+
+module.exports = { handleStaticRequest, serveCanonicalRoot };

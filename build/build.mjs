@@ -155,6 +155,40 @@ function verifyOutputs() {
 }
 
 // ---------------------------------------------------------------------------
+// dist/package.json -- REQUIRED, do not drop
+// ---------------------------------------------------------------------------
+// The repo root package.json is "type":"module". Without an own package.json
+// here, Node walks up from dist/plugin.js, finds that, and loads the plugin's
+// CommonJS source ("exports.description = ...") as an ES module -- HFS then
+// dies with "exports is not defined in ES module scope" the moment it loads
+// the plugin. This one file is what keeps dist/ a CommonJS island.
+
+const DIST_PKG = { private: true, type: 'commonjs' }
+
+async function ensureDistPackageJson() {
+  const file = path.join(DIST, 'package.json')
+  const want = JSON.stringify(DIST_PKG, null, 2) + '\n'
+  let have = null
+  try { have = await fsp.readFile(file, 'utf8') } catch { /* missing */ }
+  // Compare parsed content, not bytes, so a differently-formatted but correct
+  // file is left alone; anything else (missing, wrong, corrupt) is rewritten.
+  let ok = false
+  if (have !== null) {
+    try {
+      const p = JSON.parse(have)
+      ok = p && p.private === true && p.type === 'commonjs'
+    } catch { ok = false }
+  }
+  if (!ok) {
+    await fsp.mkdir(DIST, { recursive: true })
+    await fsp.writeFile(file, want, 'utf8')
+    log(`  package.json   ${rel(file)}  (written -- ${have === null ? 'was missing' : 'was wrong'})`)
+  } else {
+    log(`  package.json   ${rel(file)}  (ok)`)
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Build
 // ---------------------------------------------------------------------------
 
@@ -162,6 +196,7 @@ async function build() {
   const t0 = Date.now()
   log('build: src/ -> dist/public/')
 
+  await ensureDistPackageJson()
   await cleanPublic()
   await buildApp()
   await buildStyles()
