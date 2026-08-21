@@ -1,0 +1,75 @@
+// ---------------------------------------------------------------------------
+// components/_progress.scss -- progress bars, per-core grid, process bars.
+// ---------------------------------------------------------------------------
+
+.progress-track {
+    background: var(--ss-bar-bg);
+    border-radius: 9999px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+
+    &--tight { margin-bottom: 0.5rem; }
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.5s ease;
+
+    &--blue   { background: var(--ss-blue); }
+    &--green  { background: var(--ss-green); }
+    &--purple { background: var(--ss-purple); }
+    &--red    { background: var(--ss-red); }
+}
+
+.swap-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--ss-text-3);
+    margin-top: 0.5rem;
+}
+
+.cores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.core-item {
+    font-size: 0.62rem;
+    text-align: center;
+    color: var(--ss-text-3);
+    font-family: var(--ss-mono);
+}
+
+.core-bar {
+    height: 3px;
+    border-radius: 9999px;
+    background: var(--ss-bar-bg);
+    overflow: hidden;
+}
+
+.core-bar__fill {
+    height: 100%;
+    background: var(--ss-blue);
+}
+
+.proc-bar-track {
+    background: var(--ss-bar-bg);
+    border-radius: 9999px;
+    height: 5px;
+    overflow: hidden;
+    min-width: 40px;
+}
+
+.proc-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+
+    &--blue  { background: var(--ss-blue); }
+    &--green { background: var(--ss-green); }
+}

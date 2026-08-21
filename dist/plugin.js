@@ -1,11 +1,10 @@
 // Plugin metadata for HFS v3
-exports.version     = 2.0;
+exports.version     = 3.0;
 exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
 exports.author = "feuerswut";
 exports.repo   = "feuerswut/hfs-sysstats";
-exports.depend = [{ repo: "feuerswut/hfs-tailwind" }];
 
 exports.config = {
     allowPublicAccess: {
@@ -28,9 +27,24 @@ exports.config = {
         helperText:   "'basic' sends platform & arch. 'detailed' adds CPU cores, RAM, disk count, OS distro. 'off' sends nothing.",
         xs: 12,
     },
+    pathAlias: {
+        type:         'string',
+        defaultValue: '/~/stats',
+        label:        'Path alias (redirect)',
+        helperText:   'Old URL that should redirect here. Leave empty for none.',
+        xs: 12,
+    },
+    useCustomFrontend: {
+        type:         'boolean',
+        defaultValue: false,
+        label:        'Use custom frontend',
+        helperText:   "Serve dashboard files from storage/custom-frontend/ instead of the bundled ones (falls back to the bundled files when a requested file isn't present there).",
+        xs: 12,
+    },
 };
 
 exports.changelog = [
+    { version: 3.0, message: "Canonical URL is now /~/plugins/<id> (was hardcoded to /~/stats). Added a pathAlias redirect for the old URL, a custom-frontend override, and rebuilt the dashboard as TypeScript + Sass, dropping the vendored unpurged Tailwind build and the hfs-tailwind dependency." },
     { version: 2.0, message: "Full systeminformation integration. Separate serve.js/api.js/config-manager.js. storage/config.json with hardware detection. Dark mode support." },
     { version: 1.8, message: "Added optional daily usage ping (basic / detailed / off)." },
     { version: 1.7, message: "Separate Modern Tailwind distribution into another plugin. Please install before updating." },
@@ -41,10 +55,13 @@ const { schedulePing }        = require('./usage-ping');
 const { initConfig }          = require('./config-manager');
 const { handleStaticRequest } = require('./serve');
 const { handleApiRequest }    = require('./api');
+const { redirectAlias }       = require('./backend/path-alias');
 
 exports.init = async api => {
     const auth               = api.require('./auth');
     const getCurrentUsername = auth.getCurrentUsername;
+
+    const canonicalPath = `/~/plugins/${api.id}`;
 
     // Start optional daily telemetry ping
     schedulePing(api, si, exports.version);
@@ -56,10 +73,23 @@ exports.init = async api => {
     return { middleware };
 
     async function middleware(ctx) {
-        const url = ctx.req.url;
+        // ── Legacy-URL redirect ─────────────────────────────────────────────────
+        if (redirectAlias(ctx, api, canonicalPath)) return;
 
         // Only handle our namespace
-        if (!url.startsWith('/~/stats')) return;
+        const { path } = ctx;
+        if (path !== canonicalPath && !path.startsWith(canonicalPath + '/')) return;
+
+        // A bare canonical path (no trailing slash) must redirect to one with a
+        // trailing slash, otherwise the dashboard's relative asset URLs
+        // (main.js, styles.css, ...) resolve against the wrong base.
+        if (path === canonicalPath) {
+            ctx.status = 307;
+            ctx.set('Location', canonicalPath + '/' + (ctx.querystring ? '?' + ctx.querystring : ''));
+            ctx.body = '';
+            ctx.stop();
+            return;
+        }
 
         // ── Auth gate ────────────────────────────────────────────────────────
         const username = getCurrentUsername(ctx);
@@ -74,11 +104,15 @@ exports.init = async api => {
         }
 
         // ── Route dispatch ───────────────────────────────────────────────────
-        if (url === '/~/stats/api' || url.startsWith('/~/stats/api?')) {
+        const sub = path.slice(canonicalPath.length); // starts with '/'
+        if (sub === '/api') {
             await handleApiRequest(ctx, si);
             return;
         }
 
-        handleStaticRequest(ctx, api);
+        // Static assets: only intervene for the custom-frontend override; the
+        // bundled dist/public/ files are otherwise served automatically by HFS
+        // core once the request falls through here.
+        handleStaticRequest(ctx, api, canonicalPath);
     }
 };

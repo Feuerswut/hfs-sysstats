@@ -1,0 +1,40 @@
+// ---------------------------------------------------------------------------
+// components/_alert.scss -- the "failed to load stats" error banner.
+// ---------------------------------------------------------------------------
+
+.alert {
+    display: flex;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+
+    &.is-hidden {
+        display: none;
+    }
+}
+
+.alert--error {
+    background: var(--ss-alert-bg);
+    border: 1px solid var(--ss-alert-border);
+    color: var(--ss-alert-text);
+}
+
+.alert__icon {
+    flex-shrink: 0;
+    color: var(--ss-alert-border);
+}
+
+.alert__body {
+    margin-left: 0.75rem;
+}
+
+.alert__title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.alert__message {
+    font-size: 0.875rem;
+    margin: 0.25rem 0 0;
+}

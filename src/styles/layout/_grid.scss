@@ -1,0 +1,63 @@
+// ---------------------------------------------------------------------------
+// layout/_grid.scss -- page container and the three dashboard grids
+// (top cards, infrastructure layout, historical charts).
+// ---------------------------------------------------------------------------
+
+.page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+}
+
+.section {
+    margin-bottom: 2rem;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.infra-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.infra-grid__side {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    grid-column: span 1;
+}
+
+.infra-grid__main {
+    grid-column: span 1;
+
+    @media (min-width: 1024px) {
+        grid-column: span 2;
+    }
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
