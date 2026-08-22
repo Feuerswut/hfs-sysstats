@@ -1,0 +1,41 @@
+// ---------------------------------------------------------------------------
+// components/_chart.scss -- CPU/Memory history charts and their mobile
+// tap-to-load placeholder overlay.
+// ---------------------------------------------------------------------------
+
+.chart-container {
+    position: relative;
+    flex: 1;
+    min-height: 200px;
+    max-height: 220px;
+    width: 100%;
+}
+
+.chart-placeholder {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--ss-card-hover);
+    border: 2px dashed var(--ss-border);
+    border-radius: var(--ss-radius);
+    cursor: pointer;
+    z-index: 20;
+    transition: background 0.2s ease;
+
+    &:hover { background: var(--ss-bar-bg); }
+
+    &.is-visible { display: flex; }
+}
+
+.chart-placeholder__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0 1rem;
+    text-align: center;
+
+    &--blue  { color: var(--ss-blue); }
+    &--green { color: var(--ss-green); }
+}

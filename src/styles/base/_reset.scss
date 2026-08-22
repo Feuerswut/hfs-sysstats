@@ -1,0 +1,23 @@
+// ---------------------------------------------------------------------------
+// base/_reset.scss -- box model + document-level base styles.
+// ---------------------------------------------------------------------------
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    background-color: var(--ss-bg) !important;
+    color: var(--ss-text-1);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+svg {
+    display: block;
+}

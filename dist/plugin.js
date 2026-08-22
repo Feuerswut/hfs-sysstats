@@ -1,11 +1,11 @@
 // Plugin metadata for HFS v3
-exports.version     = 2.0;
+exports.version     = 3.3;
 exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
 exports.author = "feuerswut";
 exports.repo   = "feuerswut/hfs-sysstats";
-exports.depend = [{ repo: "feuerswut/hfs-tailwind" }];
+exports.depend = [{ repo: "feuerswut/hfs-shared" }];
 
 exports.config = {
     allowPublicAccess: {
@@ -28,13 +28,27 @@ exports.config = {
         helperText:   "'basic' sends platform & arch. 'detailed' adds CPU cores, RAM, disk count, OS distro. 'off' sends nothing.",
         xs: 12,
     },
+    pathAlias: {
+        type:         'string',
+        defaultValue: '/~/stats',
+        label:        'Path alias (redirect)',
+        helperText:   'Old URL that should redirect here. Leave empty for none.',
+        xs: 12,
+    },
+    useCustomFrontend: {
+        type:         'boolean',
+        defaultValue: false,
+        label:        'Use custom frontend',
+        helperText:   "Serve dashboard files from storage/custom-frontend/ instead of the bundled ones (falls back to the bundled files when a requested file isn't present there).",
+        xs: 12,
+    },
 };
 
 exports.changelog = [
-    { version: 2.0, message: "Full systeminformation integration. Separate serve.js/api.js/config-manager.js. storage/config.json with hardware detection. Dark mode support." },
-    { version: 1.8, message: "Added optional daily usage ping (basic / detailed / off)." },
-    { version: 1.7, message: "Separate Modern Tailwind distribution into another plugin. Please install before updating." },
+    { version: 3.3, message: "Serving/auth now via hfs-shared's servePublic." },
 ];
+
+const fs = require('fs');
 
 const si = require('./systeminformation');
 const { schedulePing }        = require('./usage-ping');
@@ -43,8 +57,17 @@ const { handleStaticRequest } = require('./serve');
 const { handleApiRequest }    = require('./api');
 
 exports.init = async api => {
-    const auth               = api.require('./auth');
-    const getCurrentUsername = auth.getCurrentUsername;
+    const shared = api.customApiCall('hfsShared')[0];
+    shared.requireVersion('^1.0.0');
+
+    const canonicalPath = shared.canonicalPath(api).slice(0, -1);
+
+    function authOpts() {
+        return {
+            publicAccess: api.getConfig('allowPublicAccess'),
+            hideFromUnauthorized: api.getConfig('hideFromUnauthorized'),
+        };
+    }
 
     // Start optional daily telemetry ping
     schedulePing(api, si, exports.version);
@@ -56,29 +79,56 @@ exports.init = async api => {
     return { middleware };
 
     async function middleware(ctx) {
-        const url = ctx.req.url;
+        // Legacy alias, dashboard-URL normalization, auth, and serving the
+        // bundled/custom-frontend index.html at the canonical root are all
+        // handled here -- see hfs-shared's servePublic.
+        if (shared.servePublic(ctx, api, {
+            ...authOpts(),
+            pathAlias: api.getConfig('pathAlias'),
+            useCustomFrontend: api.getConfig('useCustomFrontend'),
+            distDir: __dirname,
+        })) return;
 
         // Only handle our namespace
-        if (!url.startsWith('/~/stats')) return;
+        const { path } = ctx;
+        if (path !== canonicalPath && !path.startsWith(canonicalPath + '/')) return;
 
-        // ── Auth gate ────────────────────────────────────────────────────────
-        const username = getCurrentUsername(ctx);
-        if (!username) {
-            if (!api.getConfig('allowPublicAccess')) {
-                if (api.getConfig('hideFromUnauthorized')) return; // pretend we don't exist
-                ctx.status = 403;
-                ctx.body   = '';
-                ctx.stop();
-                return;
-            }
-        }
+        // ── Auth for everything else in this namespace (the API) ──────────
+        if (shared.auth.gate(ctx, api, authOpts())) return;
 
         // ── Route dispatch ───────────────────────────────────────────────────
-        if (url === '/~/stats/api' || url.startsWith('/~/stats/api?')) {
+        const sub = path.slice(canonicalPath.length); // starts with '/'
+        if (sub === '/api') {
             await handleApiRequest(ctx, si);
             return;
         }
 
-        handleStaticRequest(ctx, api);
+        // ── GET /api/tailwind.js ─────────────────────────────────────────────
+        // Optional runtime enhancement: the dashboard body content carries
+        // Tailwind utility classes alongside its own Sass, and loads this
+        // script client-side to activate them. Purely a soft lookup -- no
+        // exports.depend on the plugin providing it, so the page stays fully
+        // usable via its bundled Sass alone when it isn't installed.
+        if (sub === '/api/tailwind.js') {
+            const tailwind = api.customApiCall('tailwind');
+            if (!tailwind || !tailwind[0]) {
+                ctx.status = 404;
+                ctx.type   = 'application/json';
+                ctx.body   = JSON.stringify({ error: 'Tailwind is not available' });
+                ctx.stop();
+                return;
+            }
+            ctx.type = 'application/javascript';
+            ctx.set('Cache-Control', 'public, max-age=86400');
+            ctx.body = fs.createReadStream(tailwind[0].path);
+            ctx.stop();
+            return;
+        }
+
+        // Any other static asset (the dashboard root itself was already
+        // handled by servePublic above): only intervene for the
+        // custom-frontend override; the bundled dist/public/ files are
+        // otherwise served automatically by HFS core.
+        handleStaticRequest(ctx, api, canonicalPath);
     }
 };

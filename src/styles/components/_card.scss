@@ -1,0 +1,83 @@
+// ---------------------------------------------------------------------------
+// components/_card.scss -- the stat-card shell used throughout the dashboard.
+// ---------------------------------------------------------------------------
+
+.card {
+    background: var(--ss-card);
+    border: 1px solid var(--ss-border);
+    box-shadow: var(--ss-shadow);
+    border-radius: var(--ss-radius);
+    padding: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--ss-shadow-lg);
+    }
+}
+
+.card--column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card--fill {
+    height: 100%;
+}
+
+.card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.card__title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--ss-text-2);
+}
+
+.icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+
+    &--sm { width: 1.25rem; height: 1.25rem; }
+    &--blue   { color: var(--ss-blue); }
+    &--green  { color: var(--ss-green); }
+    &--red    { color: var(--ss-red); }
+    &--purple { color: var(--ss-purple); }
+    &--indigo { color: var(--ss-indigo); }
+    &--gray   { color: var(--ss-text-3); }
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+
+    &--lg { font-size: 1.875rem; margin-top: 0.5rem; }
+    &--blue  { color: var(--ss-blue); }
+    &--green { color: var(--ss-green); }
+    &--red   { color: var(--ss-red); }
+}
+
+.metric-detail {
+    font-size: 0.75rem;
+    color: var(--ss-text-3);
+    margin: 0 0 0.75rem;
+}
+
+.metric-status {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0.25rem 0 0;
+    color: var(--ss-text-3);
+
+    &--good { color: var(--ss-good-text); }
+    &--warn { color: #b45309; }
+    &--bad  { color: var(--ss-alert-text); }
+}

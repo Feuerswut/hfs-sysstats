@@ -1,0 +1,67 @@
+// ---------------------------------------------------------------------------
+// components/_table.scss -- top-processes table.
+// ---------------------------------------------------------------------------
+
+.table-scroll {
+    overflow-x: auto;
+    flex: 1;
+}
+
+.proc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    font-family: var(--ss-mono);
+    color: var(--ss-text-2);
+
+    th {
+        text-align: left;
+        padding: 6px 8px;
+        color: var(--ss-text-3);
+        border-bottom: 1px solid var(--ss-border);
+        font-family: sans-serif;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 5px 8px;
+        border-bottom: 1px solid var(--ss-bar-bg);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    tr:hover td {
+        background: var(--ss-card-hover);
+    }
+}
+
+.proc-table .pid-col      { width: 60px;  min-width: 60px;  max-width: 60px;  }
+.proc-table .user-col     { width: 80px;  min-width: 60px;  max-width: 80px;  }
+.proc-table .cmd-col      { width: 140px; min-width: 80px;  max-width: 140px; font-weight: 600; color: var(--ss-text-2); }
+.proc-table .cpu-val-col  { width: 56px;  min-width: 56px;  max-width: 56px;  white-space: nowrap; }
+.proc-table .mem-val-col  { width: 56px;  min-width: 56px;  max-width: 56px;  white-space: nowrap; }
+.proc-table .bar-col      { width: auto;  min-width: 60px;  }
+
+@media (max-width: 767px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+.val {
+    font-family: var(--ss-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--ss-text-4);
+}
+
+.proc-summary {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ss-text-3);
+    background: var(--ss-bar-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}

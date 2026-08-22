@@ -1,0 +1,68 @@
+// ---------------------------------------------------------------------------
+// abstracts/_tokens.scss -- the palette, and the single source of truth for it.
+//
+// Every colour used elsewhere in this stylesheet goes through a --ss-* custom
+// property declared here. This dashboard is a standalone static page (no
+// build-time or runtime dependency on any other plugin's styling), but the
+// values are chosen to sit visually next to HFS's own chrome: same light/dark
+// switch convention (body.theme-dark), same idea of a four-step text scale.
+//
+// Custom properties rather than Sass variables on purpose: the theme toggle
+// swaps a class on <body> at runtime, so the values must be live in the
+// cascade -- a Sass variable would already be resolved away at build time.
+// ---------------------------------------------------------------------------
+
+:root {
+    --ss-bg:         #f3f4f6;
+    --ss-card:       #ffffff;
+    --ss-card-hover: #f9fafb;
+    --ss-text-1:     #111827;
+    --ss-text-2:     #374151;
+    --ss-text-3:     #6b7280;
+    --ss-text-4:     #9ca3af;
+    --ss-border:     #e5e7eb;
+    --ss-bar-bg:     #e5e7eb;
+    --ss-shadow:     0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --ss-shadow-lg:  0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+    --ss-radius:     0.5rem;
+    --ss-mono:       'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace;
+
+    // accent colours used across stat cards, bars and badges
+    --ss-blue:   #3b82f6;
+    --ss-green:  #22c55e;
+    --ss-red:    #ef4444;
+    --ss-purple: #a855f7;
+    --ss-indigo: #6366f1;
+
+    --ss-good-bg:   #d1fae5;
+    --ss-good-text: #065f46;
+    --ss-bad-bg:    #fee2e2;
+    --ss-bad-text:  #991b1b;
+
+    --ss-alert-bg:     #fee2e2;
+    --ss-alert-border: #f87171;
+    --ss-alert-text:   #b91c1c;
+}
+
+body.theme-dark {
+    --ss-bg:         #0d1117;
+    --ss-card:       #161b22;
+    --ss-card-hover: #1c2128;
+    --ss-text-1:     #e6edf3;
+    --ss-text-2:     #c9d1d9;
+    --ss-text-3:     #8b949e;
+    --ss-text-4:     #6e7681;
+    --ss-border:     #30363d;
+    --ss-bar-bg:     #21262d;
+    --ss-shadow:     0 1px 3px 0 rgb(0 0 0 / 0.4);
+    --ss-shadow-lg:  0 4px 6px -1px rgb(0 0 0 / 0.4);
+
+    --ss-good-bg:   #064e3b;
+    --ss-good-text: #6ee7b7;
+    --ss-bad-bg:    #450a0a;
+    --ss-bad-text:  #fca5a5;
+
+    --ss-alert-bg:     #450a0a;
+    --ss-alert-border: #b91c1c;
+    --ss-alert-text:   #fca5a5;
+}
