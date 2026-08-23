@@ -1,5 +1,5 @@
 // Plugin metadata for HFS v3
-exports.version     = 3.5;
+exports.version     = 3.4;
 exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
@@ -45,7 +45,7 @@ exports.config = {
 };
 
 exports.changelog = [
-    { version: 3.5, message: "Ping now solves the ingest server's proof-of-work gate." },
+    { version: 3.4, message: "Ping now declares its record class explicitly." },
 ];
 
 const fs = require('fs');

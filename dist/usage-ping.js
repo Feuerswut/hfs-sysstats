@@ -43,6 +43,7 @@ async function sendPing(api, si, pluginVersion) {
     // --- basic: persistent install id, plugin version, platform, arch ---
     const osInfoBasic = await si.osInfo();
     const payload = {
+        class: 'sysstats',
         level,
         hostId: getOrCreateHostId(),
         pluginVersion: pluginVersion ?? null,
