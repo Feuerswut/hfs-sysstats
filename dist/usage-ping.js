@@ -9,11 +9,14 @@
  *   "detailed" – basic + CPU cores, RAM bucket, disk count, OS distro/release
  */
 
+const crypto = require('crypto');
 const { getOrCreateHostId } = require('./config-manager');
 
 const PING_URL = 'https://feuerswut.de/~/ingest'; // replace with your endpoint
+const POW_URL  = PING_URL + '/pow';
 const INITIAL_DELAY_MS = 60 * 60 * 1000;       // 1 hour after init
 const MS_PER_DAY       = 24 * 60 * 60 * 1000;  // repeat interval
+const POW_MAX_ATTEMPTS = 5_000_000;            // safety cap against a misconfigured difficulty
 
 /**
  * Schedule a single ping and then reschedule every 24 h.
@@ -66,9 +69,11 @@ async function sendPing(api, si, pluginVersion) {
         payload.diskCount     = Array.isArray(disk) ? disk.length : null;
     }
 
+    const powHeaders = await fetchPowHeaders().catch(() => ({}));
+
     const response = await fetch(PING_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...powHeaders },
         body: JSON.stringify(payload),
         signal: AbortSignal.timeout(10_000), // 10 s timeout
     });
@@ -76,6 +81,42 @@ async function sendPing(api, si, pluginVersion) {
     if (!response.ok) {
         throw new Error(`Ping returned HTTP ${response.status}`);
     }
+}
+
+/**
+ * If the ingest endpoint currently requires a proof-of-work solution
+ * (see hfs-ingest's README), fetches a challenge and solves it, returning
+ * the headers to attach to the ping POST. Returns {} when the feature is
+ * off, the probe fails, or the endpoint is some older/unrelated server that
+ * doesn't have a /pow route at all -- the ping still gets sent either way,
+ * and the server decides whether to accept it.
+ */
+async function fetchPowHeaders() {
+    const res = await fetch(POW_URL, { signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) return {};
+    const info = await res.json();
+    if (!info || !info.required) return {};
+
+    const solution = solvePow(info.challenge, info.difficulty);
+    return {
+        'X-Ingest-Pow-Challenge': info.challenge,
+        'X-Ingest-Pow-Solution':  solution,
+    };
+}
+
+/**
+ * Brute-forces a solution string such that sha256(`${challenge}:${solution}`),
+ * hex-encoded, starts with `difficulty` zero characters -- the same plain
+ * SHA-256 hex-prefix scheme a browser can solve via crypto.subtle.digest.
+ */
+function solvePow(challenge, difficulty) {
+    const prefix = '0'.repeat(difficulty);
+    for (let i = 0; i < POW_MAX_ATTEMPTS; i++) {
+        const solution = i.toString(36);
+        const hex = crypto.createHash('sha256').update(`${challenge}:${solution}`).digest('hex');
+        if (hex.startsWith(prefix)) return solution;
+    }
+    throw new Error('Could not solve proof of work within the attempt budget');
 }
 
 /**
