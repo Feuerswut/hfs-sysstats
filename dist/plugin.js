@@ -1,5 +1,5 @@
 // Plugin metadata for HFS v3
-exports.version     = 3.3;
+exports.version     = 3.4;
 exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
@@ -25,7 +25,7 @@ exports.config = {
         defaultValue: 'basic',
         label:        'Usage Ping',
         options:      ['off', 'basic', 'detailed'],
-        helperText:   "'basic' sends platform & arch. 'detailed' adds CPU cores, RAM, disk count, OS distro. 'off' sends nothing.",
+        helperText:   "'basic' sends a persistent install id, plugin version, platform & arch. 'detailed' adds CPU cores, RAM, disk count, OS distro/release. 'off' sends nothing.",
         xs: 12,
     },
     pathAlias: {
@@ -45,7 +45,7 @@ exports.config = {
 };
 
 exports.changelog = [
-    { version: 3.3, message: "Serving/auth now via hfs-shared's servePublic." },
+    { version: 3.4, message: "Ping now declares its record class explicitly." },
 ];
 
 const fs = require('fs');

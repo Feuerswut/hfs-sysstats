@@ -1,12 +1,16 @@
 'use strict';
 
-const path = require('path');
-const fs   = require('fs');
+const path   = require('path');
+const fs     = require('fs');
+const crypto = require('crypto');
 
 const DEFAULT_CONFIG_PATH = path.join(__dirname, 'default-config.json');
 const STORAGE_DIR         = path.join(__dirname, 'storage');
 const CONFIG_PATH         = path.join(STORAGE_DIR, 'config.json');
+const HOST_ID_PATH        = path.join(STORAGE_DIR, 'host-id.json');
 const CACHE_TTL           = 30_000; // re-read disk every 30 s so edits take effect live
+
+let _hostId = null;
 
 let _cache          = null;
 let _cacheTimestamp = 0;
@@ -159,4 +163,27 @@ function getConfig() {
     return _cache;
 }
 
-module.exports = { initConfig, getConfig };
+/**
+ * Returns this install's persistent random id, generating and
+ * persisting one to storage/host-id.json on first call. Used only to
+ * tell apart distinct installs in the usage ping -- not derived from
+ * any hardware/network identifier.
+ */
+function getOrCreateHostId() {
+    if (_hostId) return _hostId;
+
+    ensureStorageDir();
+    try {
+        const raw = JSON.parse(fs.readFileSync(HOST_ID_PATH, 'utf8'));
+        if (raw && typeof raw.hostId === 'string') {
+            _hostId = raw.hostId;
+            return _hostId;
+        }
+    } catch { /* missing or corrupt -- generate a fresh one below */ }
+
+    _hostId = crypto.randomUUID();
+    fs.writeFileSync(HOST_ID_PATH, JSON.stringify({ hostId: _hostId }, null, 2), 'utf8');
+    return _hostId;
+}
+
+module.exports = { initConfig, getConfig, getOrCreateHostId };

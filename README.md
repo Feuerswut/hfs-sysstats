@@ -25,7 +25,9 @@ dashboard) instead of the bundled ones. Any file not found in that folder
 falls back to the bundled version.
 
 ## Usage Ping
-This plugin contains a daily usage ping, so I know what kind of architectures are used and how I can improve the dashboard. By default, only limited data is sent ("basic" usage ping), you can opt-out completely by setting the usage ping to "off", or give me more information by setting it to "detailed".
+This plugin contains a daily usage ping, so I know what kind of architectures are used and how I can improve the dashboard. By default, only limited data is sent ("basic" usage ping: a persistent, randomly generated install id, the plugin version, platform, and architecture), you can opt-out completely by setting the usage ping to "off", or give me more information by setting it to "detailed" (adds CPU cores, RAM bucket, disk count, and OS distro/release).
+
+If the receiving endpoint has its optional proof-of-work gate enabled, the ping solves it automatically first (a small SHA-256 puzzle, same scheme a browser could solve) before sending — no configuration needed on this side.
 
 ## Development
 The dashboard frontend is TypeScript + Sass, built with esbuild/sass/postcss
