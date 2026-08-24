@@ -5,9 +5,11 @@
  *
  * Levels:
  *   "off"      – no data is sent at all
- *   "basic"    – plugin version only  (default)
- *   "detailed" – basic + platform, arch, CPU cores, RAM bucket, disk count, OS distro/release
+ *   "basic"    – persistent install id, plugin version, platform, arch  (default)
+ *   "detailed" – basic + CPU cores, RAM bucket, disk count, OS distro/release
  */
+
+const { getOrCreateHostId } = require('./config-manager');
 
 const PING_URL = 'https://feuerswut.de/~/ingest'; // replace with your endpoint
 const INITIAL_DELAY_MS = 60 * 60 * 1000;       // 1 hour after init
@@ -35,16 +37,20 @@ async function sendPing(api, si, pluginVersion) {
     const level = api.getConfig('usagePing');
     if (level === 'off') return;
 
-    // --- basic: plugin version only ---
+    // --- basic: persistent install id, plugin version, platform, arch ---
+    const osInfoBasic = await si.osInfo();
     const payload = {
         level,
+        hostId: getOrCreateHostId(),
         pluginVersion: pluginVersion ?? null,
+        platform: normalizePlatform(osInfoBasic.platform),
+        arch: normalizeArch(osInfoBasic.arch),
     };
 
     // --- detailed: basic + system info ---
     if (level === 'detailed') {
-        const [osInfo, cpu, mem, disk] = await Promise.all([
-            si.osInfo(),
+        const osInfo = osInfoBasic;
+        const [cpu, mem, disk] = await Promise.all([
             si.cpu(),
             si.mem(),
             si.fsSize(),
@@ -80,6 +86,27 @@ function ramBucket(bytes) {
     if (!bytes) return null;
     const gb = bytes / (1024 ** 3);
     return Math.pow(2, Math.round(Math.log2(gb)));
+}
+
+/**
+ * Buckets a raw systeminformation platform string down to the coarse
+ * category the basic ping reports.
+ */
+function normalizePlatform(platform) {
+    const p = (platform || '').toLowerCase();
+    if (p.includes('win')) return 'windows';
+    if (p.includes('mac') || p.includes('darwin') || p.includes('osx')) return 'mac';
+    if (p.includes('linux')) return 'linux';
+    return 'other';
+}
+
+/**
+ * Buckets a raw systeminformation arch string down to x86/x64 for the
+ * basic ping (32-bit vs. 64-bit only, no per-arch fingerprinting).
+ */
+function normalizeArch(arch) {
+    const a = (arch || '').toLowerCase();
+    return a.includes('64') ? 'x64' : 'x86';
 }
 
 module.exports = { schedulePing };
