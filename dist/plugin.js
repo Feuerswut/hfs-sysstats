@@ -5,7 +5,7 @@ exports.apiRequired = 8.65;
 
 exports.author = "feuerswut";
 exports.repo   = "feuerswut/hfs-sysstats";
-exports.depend = [{ repo: "feuerswut/hfs-shared" }];
+exports.depend = [{ "repo": "feuerswut/hfs-shared", "version": 1 }]
 
 exports.config = {
     allowPublicAccess: {
