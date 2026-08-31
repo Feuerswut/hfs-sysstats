@@ -1,11 +1,10 @@
 // Plugin metadata for HFS v3
-exports.version     = 3.4;
+exports.version     = 3.6;
 exports.description = "System Statistics Dashboard — Full systeminformation integration with dark mode and config-driven sections";
 exports.apiRequired = 8.65;
 
 exports.author = "feuerswut";
 exports.repo   = "feuerswut/hfs-sysstats";
-exports.depend = [{ "repo": "feuerswut/hfs-shared", "version": 1 }]
 
 exports.config = {
     allowPublicAccess: {
@@ -45,6 +44,8 @@ exports.config = {
 };
 
 exports.changelog = [
+    { version: 3.6, message: "The hfs-shared warning now gives the specific reason and reappears/clears more reliably (fallback poll added). Vendored guard moved to lib/dependency.js." },
+    { version: 3.5, message: "Hard exports.depend on hfs-shared replaced with a self-clearing config warning that hides the rest of the settings while hfs-shared is missing or outdated." },
     { version: 3.4, message: "Ping now declares its record class explicitly." },
 ];
 
@@ -55,11 +56,25 @@ const { schedulePing }        = require('./usage-ping');
 const { initConfig }          = require('./config-manager');
 const { handleStaticRequest } = require('./serve');
 const { handleApiRequest }    = require('./api');
+const { awaitHfsShared }      = require('./lib/dependency');
 
 exports.init = async api => {
-    const shared = api.customApiCall('hfsShared')[0];
-    shared.requireVersion('^1.0.0');
+    // Start optional daily telemetry ping
+    schedulePing(api, si, exports.version);
 
+    // Bootstrap config — generates storage/config.json from defaults + hardware detection
+    // if it doesn't exist yet. Subsequent boots just cache-read the existing file.
+    await initConfig(si);
+
+    let handleRequest = null;
+    awaitHfsShared(api, exports.config, '^1.0.0', shared => {
+        handleRequest = startRealPlugin(api, shared);
+    });
+
+    return { middleware: ctx => handleRequest ? handleRequest(ctx) : undefined };
+};
+
+function startRealPlugin(api, shared) {
     const canonicalPath = shared.canonicalPath(api).slice(0, -1);
 
     function authOpts() {
@@ -69,16 +84,7 @@ exports.init = async api => {
         };
     }
 
-    // Start optional daily telemetry ping
-    schedulePing(api, si, exports.version);
-
-    // Bootstrap config — generates storage/config.json from defaults + hardware detection
-    // if it doesn't exist yet. Subsequent boots just cache-read the existing file.
-    await initConfig(si);
-
-    return { middleware };
-
-    async function middleware(ctx) {
+    return async function middleware(ctx) {
         // Legacy alias, dashboard-URL normalization, auth, and serving the
         // bundled/custom-frontend index.html at the canonical root are all
         // handled here -- see hfs-shared's servePublic.
@@ -130,5 +136,5 @@ exports.init = async api => {
         // custom-frontend override; the bundled dist/public/ files are
         // otherwise served automatically by HFS core.
         handleStaticRequest(ctx, api, canonicalPath);
-    }
-};
+    };
+}
